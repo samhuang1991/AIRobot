@@ -54,7 +54,8 @@
             android:layout_height="match_parent"
             android:src="@mipmap/help"
             android:layout_marginStart="10dp"
-            tools:ignore="NestedWeights" />
+            tools:ignore="NestedWeights"
+            android:visibility = "gone"/>
         <ImageView
             android:id="@+id/config"
             android:layout_width="0dp"
@@ -63,6 +64,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:src="@mipmap/config"
+            android:visibility = "gone"
             />
         <ImageView
             android:id="@+id/connect"
@@ -72,6 +74,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:src="@mipmap/config"
+            android:visibility = "gone"
             />
         <EditText
             android:id="@+id/input"
@@ -92,7 +95,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:layout_marginStart="10dp"
-            android:src="@mipmap/send_msg"
+            android:src="@drawable/ic_send"
             />
     </LinearLayout>
 
