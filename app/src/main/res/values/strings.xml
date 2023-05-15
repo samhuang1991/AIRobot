@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">AIRobot</string>
+    <string name="github_link">https://github.com/icecoins/ChatGPT_Android</string>
+    <string name="FAQ">F A Q</string>
+    <string name="chat">ChatGPT</string>
+    <string name="input_text">在此处输入文本</string>
+</resources>
