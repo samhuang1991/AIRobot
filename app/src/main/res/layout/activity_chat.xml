@@ -5,11 +5,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_margin="20dp"
+    android:background = "#66EFEDED"
     tools:context=".Chat">
 
     <TextView
         android:id="@+id/chat_title"
-        android:layout_marginTop="20dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -17,27 +17,31 @@
         android:textSize="25sp"
         android:gravity="center"
         />
-    <ListView
-        android:id="@+id/result"
-        android:textIsSelectable="true"
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="13"
         android:layout_gravity="center"
-        android:gravity="center"
         android:textSize="16sp"
         android:textColor="#13ABF1"
+        android:gravity="center"
+        android:layout_above="@+id/messageEditText"
+        android:layout_marginBottom="8dp"
+        android:padding="8dp"
         android:scrollbars="vertical"
         android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
-        />
+        android:transcriptMode="alwaysScroll"/>
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_height="0dp"
         android:layout_weight="2"
         android:orientation="horizontal"
-        android:layout_marginBottom="20dp"
+        android:layout_marginBottom="10dp"
+        android:background = "#66CABCBC"
         >
         <ImageView
             android:id="@+id/del_history"
@@ -46,7 +50,8 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:src="@mipmap/delete_history"
-            tools:ignore="NestedWeights" />
+            tools:ignore="NestedWeights"
+            android:visibility = "gone"/>
         <ImageView
             android:id="@+id/help"
             android:layout_width="0dp"
@@ -82,7 +87,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="6"
-            android:gravity="center"
             android:scrollbars="vertical"
             android:layout_marginStart="10dp"
             android:text=""

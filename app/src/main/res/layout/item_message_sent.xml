@@ -6,16 +6,6 @@
     android:gravity="center_vertical"
     android:layout_marginStart="30dp"
     android:padding="10dp">
-    <ImageView
-        android:id="@+id/user_say"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="20dp"
-        android:src="@drawable/ic_user_circle"
-        android:layout_gravity="center"
-        android:rotation="180"
-        android:visibility = "gone"
-        />
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -24,7 +14,7 @@
         android:layout_marginStart="10dp"
         >
         <TextView
-            android:id="@+id/text_user_in"
+            android:id="@+id/messageTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="15sp"
@@ -42,7 +32,7 @@
         android:layout_height="40dp"
         android:layout_gravity="center"
         android:scaleType="fitXY"
-        android:src="@drawable/ic_user_circle"
+        android:src="@drawable/ic_user"
         android:layout_marginStart="5dp"
         />
 </LinearLayout>

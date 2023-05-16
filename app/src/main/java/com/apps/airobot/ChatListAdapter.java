@@ -53,7 +53,7 @@ public class ChatListAdapter extends BaseAdapter {
             holder = (ViewHolder) contentView.getTag();
         }
         holder.say.setOnClickListener(v->{
-            chat.fetchSound(position);
+//            chat.fetchSound(position);
         });
         holder.text.setText(mApi.chatItems.get(position).getText().trim());
         return contentView;
