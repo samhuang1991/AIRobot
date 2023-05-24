@@ -3,12 +3,26 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/activity_chat.xml" value="0.1" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/ic_iconfont_big.xml" value="0.2" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/ic_iconfont_small.xml" value="0.214" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/ic_send.xml" value="0.161" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/ic_top.xml" value="0.214" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/ic_user_circle.xml" value="0.161" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/drawable/rebot_icon.xml" value="0.161" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/activity_chat.xml" value="0.536" />
         <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/activity_main.xml" value="0.15416666666666667" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/activity_test.xml" value="0.16614583333333333" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/activity_test2.xml" value="0.23837209302325582" />
         <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/chatview_bot.xml" value="0.15416666666666667" />
-        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/chatview_user.xml" value="0.15416666666666667" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/chatview_user.xml" value="0.4221183800623053" />
         <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/item_dropdown.xml" value="0.15416666666666667" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/item_message_receive.xml" value="0.38697916666666665" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/item_message_received.xml" value="0.38697916666666665" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/item_message_sent.xml" value="0.38697916666666665" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/item_select.xml" value="0.14791666666666667" />
         <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/layout_help.xml" value="0.15416666666666667" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/message_item.xml" value="0.16510416666666666" />
+        <entry key="..\:/MyProjects/AIRobotChat/app/src/main/res/layout/message_text_view.xml" value="0.153125" />
       </map>
     </option>
   </component>

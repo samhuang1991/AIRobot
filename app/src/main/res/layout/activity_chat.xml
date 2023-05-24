@@ -18,8 +18,8 @@
         android:gravity="center"
         />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <androidx.leanback.widget.VerticalGridView
+        android:id="@+id/vGridView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="13"
@@ -27,12 +27,12 @@
         android:textSize="16sp"
         android:textColor="#13ABF1"
         android:gravity="center"
-        android:layout_above="@+id/messageEditText"
         android:layout_marginBottom="8dp"
         android:padding="8dp"
         android:scrollbars="vertical"
         android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"/>
+        android:transcriptMode="alwaysScroll"
+        />
 
     <LinearLayout
         android:layout_width="match_parent"
