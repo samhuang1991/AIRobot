@@ -3,9 +3,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ItemBridgeAdapter;
+import androidx.leanback.widget.VerticalGridPresenter;
+import androidx.leanback.widget.VerticalGridView;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.media.AsyncPlayer;
@@ -21,7 +27,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import com.alibaba.fastjson.JSONObject;
@@ -55,7 +60,7 @@ public class Chat extends AppCompatActivity {
     ChatItem current_bot_chat;
 
 
-    private RecyclerView recyclerView;
+    private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
     EditText input;
     ImageView help,
@@ -79,13 +84,11 @@ public class Chat extends AppCompatActivity {
         mediaPlayer = new MediaPlayer();
         mApi.chatItems = new ArrayList<>();
         history = new ArrayList<>();
-        recyclerView = findViewById(R.id.recyclerView);
 
-        // Set up RecyclerView
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
+        verticalGridView = findViewById(R.id.vGridView);
         messageListAdapter = new MessageListAdapter();
-        recyclerView.setAdapter(messageListAdapter);
+        verticalGridView.setAdapter(messageListAdapter);
+        verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
 
         input = findViewById(R.id.input);
         help = findViewById(R.id.help);
@@ -183,10 +186,12 @@ public class Chat extends AppCompatActivity {
             }
         }
     }
+
+    @SuppressLint("NotifyDataSetChanged")
     void refreshListview(){
         messageListAdapter.notifyDataSetChanged();
-        recyclerView.setAdapter(messageListAdapter);
-        recyclerView.scrollToPosition(mApi.chatItems.size() -1);
+        verticalGridView.setAdapter(messageListAdapter);
+        verticalGridView.scrollToPosition(mApi.chatItems.size() -1);
     }
     void sendHandlerMsg(int what, String msg){
         Message message = new Message();
