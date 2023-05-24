@@ -74,6 +74,14 @@ public class WaveView extends View {
         mVisualizer.setEnabled(true);
     }
 
+    /**
+     * SpeechRecognizer类的onRmsChanged回调方法用于通知应用程序音频输入的音量变化。"RMS"代表"Root Mean Square"，是一种测量音频信号振幅的方式
+     */
+    public void setRmsdB(float rmsdB){
+        mAmplitude = (int) Math.abs(rmsdB*100);
+        mHandler.sendEmptyMessage(0);
+    }
+
     public void releaseVisualizer() {
         if (mVisualizer != null) {
             mVisualizer.release();

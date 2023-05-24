@@ -119,7 +119,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         config = findViewById(R.id.config);
         mBtInput = findViewById(R.id.bt_input);
         connect = findViewById(R.id.connect);
-        mBtInput = findViewById(R.id.bt_input);
         del_history = findViewById(R.id.del_history);
         del_history.setOnClickListener(v -> {
             AlertDialog.Builder b = new AlertDialog.Builder(this);
@@ -139,7 +138,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         start.setOnClickListener(v -> {
 //            chatGPT_direct();
         });
-        mBtInput.setOnClickListener(v -> {
+        mBtInput.setOnClickListener(v->{
             startSpeechToText();
             speakingDialog.show();
         });
@@ -647,6 +646,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     @Override
     public void onRmsChanged(float rmsdB) {
         // 在音量变化时调用
+        LogUtil.i("在音量变化时调用: " + rmsdB);
+        if (speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.getmWaveView().setRmsdB(rmsdB);
+        }
+
 
         if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
             LogUtil.i("有效语音: " + rmsdB);
