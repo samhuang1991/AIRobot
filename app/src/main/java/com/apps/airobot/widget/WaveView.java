@@ -99,13 +99,13 @@ public class WaveView extends View {
         super.onDraw(canvas);
         Log.e(">>>>>","mAmplitude = " + mAmplitude);
 
-//        if (mAmplitude != 0){
-//            float hue = (mOffset % 360 + 360) % 360; // 将mOffset映射到0-360的范围内
-//            int backgroundColor = Color.HSVToColor(128, new float[]{hue, 0.4f, 0.5f}); // 128是透明度，取值范围0-255
-//            canvas.drawColor(backgroundColor);
-//        }else {
-//            return;
-//        }
+        if (mAmplitude != 0){
+            float hue = (mOffset % 360 + 360) % 360; // 将mOffset映射到0-360的范围内
+            int backgroundColor = Color.HSVToColor(128, new float[]{hue, 0.4f, 0.5f}); // 128是透明度，取值范围0-255
+            canvas.drawColor(backgroundColor);
+        }else {
+            return;
+        }
 
         int segmentCount = 6;
         float hueRange = 180f;

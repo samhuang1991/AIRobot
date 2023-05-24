@@ -19,7 +19,6 @@ import com.apps.airobot.R;
 
 public class SpeakingDialog extends Dialog {
     private WaveView mWaveView;
-    private MediaPlayer mediaPlayer;
 
     public SpeakingDialog(Context context) {
         super(context);
@@ -29,22 +28,23 @@ public class SpeakingDialog extends Dialog {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Window window = getWindow();
+
         // 设置背景透明
-        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
         // 设置对话框内容视图
         setContentView(R.layout.dialog_speaking);
 
         // 设置对话框宽度和位置
-        Window window = getWindow();
         WindowManager.LayoutParams params = window.getAttributes();
-        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        params.height = ViewGroup.LayoutParams.MATCH_PARENT;
         params.gravity = Gravity.CENTER;
         window.setAttributes(params);
 
         mWaveView = findViewById(R.id.waveView);
-        mWaveView.setAudioSessionId(0);
+        mWaveView.setAudioSessionId(1);
     }
 
     @Override
