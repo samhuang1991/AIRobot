@@ -138,6 +138,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             startSpeechToText();
             speakingDialog.show();
         });
+        mBtInput.requestFocus();
 
         handler = new Handler(Looper.getMainLooper()) {
             @Override
