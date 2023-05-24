@@ -1,0 +1,60 @@
+package com.apps.airobot.widget;
+
+import android.app.Dialog;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
+import android.widget.ImageView;
+
+import com.apps.airobot.R;
+
+public class SpeakingDialog extends Dialog {
+    private WaveView mWaveView;
+    private MediaPlayer mediaPlayer;
+
+    public SpeakingDialog(Context context) {
+        super(context);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        // 设置背景透明
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+
+        // 设置对话框内容视图
+        setContentView(R.layout.dialog_speaking);
+
+        // 设置对话框宽度和位置
+        Window window = getWindow();
+        WindowManager.LayoutParams params = window.getAttributes();
+        params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        params.gravity = Gravity.CENTER;
+        window.setAttributes(params);
+
+        mWaveView = findViewById(R.id.waveView);
+        mWaveView.setAudioSessionId(0);
+    }
+
+    @Override
+    public void show() {
+        super.show();
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+    }
+
+}

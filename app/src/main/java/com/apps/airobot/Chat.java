@@ -40,6 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
+import com.apps.airobot.widget.SpeakingDialog;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -71,6 +72,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     MediaPlayer mediaPlayer;
     ArrayList<String> history;
     ChatItem current_bot_chat;
+    SpeakingDialog speakingDialog;
 
 
     private VerticalGridView verticalGridView;
@@ -105,10 +107,13 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
 
+        speakingDialog= new SpeakingDialog(Chat.this);
+
         input = findViewById(R.id.input);
         help = findViewById(R.id.help);
         start = findViewById(R.id.start);
         config = findViewById(R.id.config);
+        mBtInput = findViewById(R.id.bt_input);
         connect = findViewById(R.id.connect);
         del_history = findViewById(R.id.del_history);
         del_history.setOnClickListener(v -> {
@@ -131,6 +136,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         });
         mBtInput.setOnClickListener(v->{
             startSpeechToText();
+//            speakingDialog.show();
         });
 
         handler = new Handler(Looper.getMainLooper()) {
