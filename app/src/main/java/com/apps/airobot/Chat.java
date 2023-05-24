@@ -142,7 +142,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             startSpeechToText();
             speakingDialog.show();
         });
-
+        mBtInput.requestFocus();
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -186,6 +186,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         current_bot_chat.setType(0);
                         current_bot_chat.setText("\t\t");
                         refreshListview();
+                        mBtInput.requestFocus();
                         break;
                     case 4:
                         // Delete History
@@ -253,7 +254,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 prompt.append(s);
             }
         }
-        prompt.append("Q: ").append(input.getText().toString()).append("\n\nA:");
+        prompt.append("Q: ").append(context).append("\n\nA:");
         return prompt.toString();
     }
 
@@ -603,6 +604,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             speechRecognizer.stopListening();
             speechRecognizer.cancel();
             speechRecognizer.destroy();
+            if(speakingDialog != null){
+                speakingDialog.dismiss();
+            }
         }
     }
 
@@ -645,14 +649,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        // 在音量变化时调用
-        LogUtil.i("在音量变化时调用: " + rmsdB);
-        if (speakingDialog != null && speakingDialog.isShowing()){
-            speakingDialog.getmWaveView().setRmsdB(rmsdB);
-        }
-
 
         if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
+            if (speakingDialog != null && speakingDialog.isShowing()){
+                speakingDialog.getmWaveView().setRmsdB(rmsdB);
+            }
             LogUtil.i("有效语音: " + rmsdB);
             // 当检测到有效语音输入时，取消计时
             handler.removeCallbacks(stopListeningRunnable);
@@ -673,12 +674,25 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onEndOfSpeech() {
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
         // 在说话结束时调用
         LogUtil.i("说话结束时调用");
     }
 
+
+    private void stopEvent(){
+        mBtInput.requestFocus();
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
+    }
     @Override
     public void onError(int error) {
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
         // 在发生错误时调用
         LogUtil.i("错误码:" + error);
     }
