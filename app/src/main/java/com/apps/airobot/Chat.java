@@ -631,6 +631,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     public void onRmsChanged(float rmsdB) {
         // 在音量变化时调用
         LogUtil.i("在音量变化时调用: " + rmsdB);
+        if (speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.getmWaveView().setRmsdB(rmsdB);
+        }
     }
 
     @Override

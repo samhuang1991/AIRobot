@@ -18,6 +18,7 @@ import android.widget.ImageView;
 import com.apps.airobot.R;
 
 public class SpeakingDialog extends Dialog {
+
     private WaveView mWaveView;
 
     public SpeakingDialog(Context context) {
@@ -44,7 +45,10 @@ public class SpeakingDialog extends Dialog {
         window.setAttributes(params);
 
         mWaveView = findViewById(R.id.waveView);
-        mWaveView.setAudioSessionId(1);
+    }
+
+    public WaveView getmWaveView() {
+        return mWaveView;
     }
 
     @Override
