@@ -1,9 +1,9 @@
-package com.example.myapplication2;
+package com.apps.airobot;
 
 import android.app.Application;
 import android.content.Context;
 
-public class TvSettingsApplication extends Application {
+public class MyApplication extends Application {
     private static Context context;
 
     @Override

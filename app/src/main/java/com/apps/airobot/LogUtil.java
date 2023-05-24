@@ -1,4 +1,4 @@
-package com.example.myapplication2;
+package com.apps.airobot;
 
 
 import android.content.Context;
@@ -7,7 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
-import static com.example.myapplication2.TvSettingsApplication.getContext;
+import static com.apps.airobot.MyApplication.getContext;
 
 
 /**
