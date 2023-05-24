@@ -65,6 +65,9 @@ import okhttp3.Response;
 public class Chat extends AppCompatActivity implements RecognitionListener {
     static UUID uuid;
     int selectedItemPosition = -1;
+
+    private static final int LISTENING_TIMEOUT = 1500; // 设置超时时间为5秒
+    private static final int SILENCE_THRESHOLD = 1; // 设置音量阈值
     boolean isBotTalking = false,
             isConnecting = false,
             isFetchingSound = false;
@@ -90,7 +93,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             BOT_CONTINUE = 1,
             USER_MSG = 2,
             BOT_END = 3,
-            CLEAR_HISTORY = 4;
+            CLEAR_HISTORY = 4,
+            STOP_RECORD = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,7 +111,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
 
-        speakingDialog= new SpeakingDialog(Chat.this);
+        speakingDialog = new SpeakingDialog(Chat.this);
 
         input = findViewById(R.id.input);
         help = findViewById(R.id.help);
@@ -115,6 +119,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         config = findViewById(R.id.config);
         mBtInput = findViewById(R.id.bt_input);
         connect = findViewById(R.id.connect);
+        mBtInput = findViewById(R.id.bt_input);
         del_history = findViewById(R.id.del_history);
         del_history.setOnClickListener(v -> {
             AlertDialog.Builder b = new AlertDialog.Builder(this);
@@ -134,7 +139,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         start.setOnClickListener(v -> {
 //            chatGPT_direct();
         });
-        mBtInput.setOnClickListener(v->{
+        mBtInput.setOnClickListener(v -> {
             startSpeechToText();
             speakingDialog.show();
         });
@@ -189,6 +194,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         mApi.chatItems.clear();
                         refreshListview();
                         mApi.showMsg(Chat.this, "记忆已清除");
+                        break;
+
+                    case STOP_RECORD:
+                        stopSpeechToText();
                         break;
                     default:
                         break;
@@ -250,8 +259,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     void chatGPT_direct(String context) {
-        if(context == null || context.isEmpty()){
-            Toast.makeText(Chat.this,"请输入有效的内容",Toast.LENGTH_SHORT).show();
+        if (context == null || context.isEmpty()) {
+            Toast.makeText(Chat.this, "请输入有效的内容", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -590,6 +599,14 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
 
+    private void stopSpeechToText() {
+        if (speechRecognizer != null) {
+            speechRecognizer.stopListening();
+            speechRecognizer.cancel();
+            speechRecognizer.destroy();
+        }
+    }
+
     /**
      * 语音转换文字
      */
@@ -630,9 +647,20 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     @Override
     public void onRmsChanged(float rmsdB) {
         // 在音量变化时调用
-        LogUtil.i("在音量变化时调用: " + rmsdB);
+
+        if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
+            LogUtil.i("有效语音: " + rmsdB);
+            // 当检测到有效语音输入时，取消计时
+            handler.removeCallbacks(stopListeningRunnable);
+        }else {
+            // 无效的语音的时候开始倒计时
+            LogUtil.i("无效语音: " + rmsdB);
+            handler.postDelayed(stopListeningRunnable,LISTENING_TIMEOUT);
+        }
+
     }
 
+    private Runnable stopListeningRunnable = this::stopSpeechToText;
     @Override
     public void onBufferReceived(byte[] buffer) {
         // 在获取到语音输入的音频数据时调用
