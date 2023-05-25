@@ -31,6 +31,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -723,5 +724,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         LogUtil.i("事件：" + eventType);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        LogUtil.i("keyCode：" + keyCode);
+        return super.onKeyDown(keyCode, event);
+    }
 
 }
