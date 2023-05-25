@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.FocusHighlight;
+import androidx.leanback.widget.FocusHighlightHelper;
 import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.VerticalGridPresenter;
 import androidx.leanback.widget.VerticalGridView;
@@ -255,6 +257,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             }
         }
         prompt.append("Q: ").append(context).append("\n\nA:");
+        LogUtil.i("prompt == "+prompt.toString());
         return prompt.toString();
     }
 

@@ -10,12 +10,11 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_weight="1"
-        android:src="@drawable/ic_send" />
+        android:src="@drawable/slector_mic_botton" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_margin="20dp"
         android:layout_weight="9"
         android:background="#66EFEDED"
         android:orientation="vertical"

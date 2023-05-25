@@ -78,7 +78,7 @@ public class WaveView extends View {
      * SpeechRecognizer类的onRmsChanged回调方法用于通知应用程序音频输入的音量变化。"RMS"代表"Root Mean Square"，是一种测量音频信号振幅的方式
      */
     public void setRmsdB(float rmsdB){
-        mAmplitude = (int) Math.abs(rmsdB*100);
+        mAmplitude = (int) Math.abs(rmsdB*5);
         mHandler.sendEmptyMessage(0);
     }
 
@@ -108,9 +108,9 @@ public class WaveView extends View {
         Log.e(">>>>>","mAmplitude = " + mAmplitude);
 
         if (mAmplitude != 0){
-            float hue = (mOffset % 360 + 360) % 360; // 将mOffset映射到0-360的范围内
-            int backgroundColor = Color.HSVToColor(128, new float[]{hue, 0.4f, 0.5f}); // 128是透明度，取值范围0-255
-            canvas.drawColor(backgroundColor);
+//            float hue = (mOffset % 360 + 360) % 360; // 将mOffset映射到0-360的范围内
+//            int backgroundColor = Color.HSVToColor(128, new float[]{hue, 0.4f, 0.5f}); // 128是透明度，取值范围0-255
+//            canvas.drawColor(backgroundColor);
         }else {
             return;
         }
