@@ -324,9 +324,17 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                             JSONObject choices = JSONObject.parseObject(object.getString("choices")
                                     .replace('[', ' ')
                                     .replace(']', ' '));
+                            LogUtil.i("object == "+object.toString());
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"role":"assistant"},"index":0}],"object":"chat.completion.chunk"}
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"content":"连接"},"index":0}],"object":"chat.completion.chunk"}
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"finish_reason":"stop","delta":{},"index":0}],"object":"chat.completion.chunk"}
                             String s;
                             if (mApi.model.equals("gpt-3.5-turbo") || mApi.model.equals("gpt-3.5-turbo-0301")) {
                                 s = JSONObject.parseObject(choices.getString("delta")).getString("content");
+                                LogUtil.i("s == "+s);
+                                if (s==null){
+                                    s = "";
+                                }
                             } else {
                                 s = choices.getString("text");
                             }
@@ -525,7 +533,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     private void showConfig() {
-        TextView title = findViewById(R.id.chat_title);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = View.inflate(this, R.layout.layout_config, null);
         initConfigs(view);
@@ -557,7 +564,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 ed.putString("vits_model", mApi.vits_speaker);
             }
             ed.apply();
-            title.setText("model : " + mApi.model);
         }).show();
     }
 
@@ -726,6 +732,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
+        //2014
         LogUtil.i("keyCode：" + keyCode);
         return super.onKeyDown(keyCode, event);
     }

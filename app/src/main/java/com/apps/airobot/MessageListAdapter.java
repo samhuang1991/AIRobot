@@ -22,6 +22,16 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         } else {
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_received, parent, false);
         }
+
+        //必须添加监听才能有选中效果
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 处理子项点击事件
+                LogUtil.i("item onClick!");
+            }
+        });
+
         return new MessageListAdapter.ViewHolder(view);
     }
 
