@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.FocusHighlight;
+import androidx.leanback.widget.FocusHighlightHelper;
 import androidx.leanback.widget.ItemBridgeAdapter;
 import androidx.leanback.widget.VerticalGridPresenter;
 import androidx.leanback.widget.VerticalGridView;
@@ -29,6 +31,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
@@ -40,6 +43,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
+import com.apps.airobot.widget.SpeakingDialog;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -64,6 +68,9 @@ import okhttp3.Response;
 public class Chat extends AppCompatActivity implements RecognitionListener {
     static UUID uuid;
     int selectedItemPosition = -1;
+
+    private static final int LISTENING_TIMEOUT = 1500; // 设置超时时间为5秒
+    private static final int SILENCE_THRESHOLD = 1; // 设置音量阈值
     boolean isBotTalking = false,
             isConnecting = false,
             isFetchingSound = false;
@@ -71,6 +78,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     MediaPlayer mediaPlayer;
     ArrayList<String> history;
     ChatItem current_bot_chat;
+    SpeakingDialog speakingDialog;
 
 
     private VerticalGridView verticalGridView;
@@ -88,7 +96,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             BOT_CONTINUE = 1,
             USER_MSG = 2,
             BOT_END = 3,
-            CLEAR_HISTORY = 4;
+            CLEAR_HISTORY = 4,
+            STOP_RECORD = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,10 +114,13 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
 
+        speakingDialog = new SpeakingDialog(Chat.this);
+
         input = findViewById(R.id.input);
         help = findViewById(R.id.help);
         start = findViewById(R.id.start);
         config = findViewById(R.id.config);
+        mBtInput = findViewById(R.id.bt_input);
         connect = findViewById(R.id.connect);
         del_history = findViewById(R.id.del_history);
         del_history.setOnClickListener(v -> {
@@ -131,8 +143,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         });
         mBtInput.setOnClickListener(v->{
             startSpeechToText();
+            speakingDialog.show();
         });
-
+        mBtInput.requestFocus();
         handler = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(Message msg) {
@@ -176,6 +189,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         current_bot_chat.setType(0);
                         current_bot_chat.setText("\t\t");
                         refreshListview();
+                        mBtInput.requestFocus();
                         break;
                     case 4:
                         // Delete History
@@ -183,6 +197,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         mApi.chatItems.clear();
                         refreshListview();
                         mApi.showMsg(Chat.this, "记忆已清除");
+                        break;
+
+                    case STOP_RECORD:
+                        stopSpeechToText();
                         break;
                     default:
                         break;
@@ -239,13 +257,14 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 prompt.append(s);
             }
         }
-        prompt.append("Q: ").append(input.getText().toString()).append("\n\nA:");
+        prompt.append("Q: ").append(context).append("\n\nA:");
+        LogUtil.i("prompt == "+prompt.toString());
         return prompt.toString();
     }
 
     void chatGPT_direct(String context) {
-        if(context == null || context.isEmpty()){
-            Toast.makeText(Chat.this,"请输入有效的内容",Toast.LENGTH_SHORT).show();
+        if (context == null || context.isEmpty()) {
+            Toast.makeText(Chat.this, "请输入有效的内容", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -305,9 +324,17 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                             JSONObject choices = JSONObject.parseObject(object.getString("choices")
                                     .replace('[', ' ')
                                     .replace(']', ' '));
+                            LogUtil.i("object == "+object.toString());
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"role":"assistant"},"index":0}],"object":"chat.completion.chunk"}
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"content":"连接"},"index":0}],"object":"chat.completion.chunk"}
+                            //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"finish_reason":"stop","delta":{},"index":0}],"object":"chat.completion.chunk"}
                             String s;
                             if (mApi.model.equals("gpt-3.5-turbo") || mApi.model.equals("gpt-3.5-turbo-0301")) {
                                 s = JSONObject.parseObject(choices.getString("delta")).getString("content");
+                                LogUtil.i("s == "+s);
+                                if (s==null){
+                                    s = "";
+                                }
                             } else {
                                 s = choices.getString("text");
                             }
@@ -506,7 +533,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     private void showConfig() {
-        TextView title = findViewById(R.id.chat_title);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = View.inflate(this, R.layout.layout_config, null);
         initConfigs(view);
@@ -538,7 +564,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 ed.putString("vits_model", mApi.vits_speaker);
             }
             ed.apply();
-            title.setText("model : " + mApi.model);
         }).show();
     }
 
@@ -584,6 +609,17 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
 
+    private void stopSpeechToText() {
+        if (speechRecognizer != null) {
+            speechRecognizer.stopListening();
+            speechRecognizer.cancel();
+            speechRecognizer.destroy();
+            if(speakingDialog != null){
+                speakingDialog.dismiss();
+            }
+        }
+    }
+
     /**
      * 语音转换文字
      */
@@ -623,10 +659,23 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        // 在音量变化时调用
-        LogUtil.i("在音量变化时调用: " + rmsdB);
+
+        if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
+            if (speakingDialog != null && speakingDialog.isShowing()){
+                speakingDialog.getmWaveView().setRmsdB(rmsdB);
+            }
+            LogUtil.i("有效语音: " + rmsdB);
+            // 当检测到有效语音输入时，取消计时
+            handler.removeCallbacks(stopListeningRunnable);
+        }else {
+            // 无效的语音的时候开始倒计时
+            LogUtil.i("无效语音: " + rmsdB);
+            handler.postDelayed(stopListeningRunnable,LISTENING_TIMEOUT);
+        }
+
     }
 
+    private Runnable stopListeningRunnable = this::stopSpeechToText;
     @Override
     public void onBufferReceived(byte[] buffer) {
         // 在获取到语音输入的音频数据时调用
@@ -635,12 +684,25 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onEndOfSpeech() {
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
         // 在说话结束时调用
         LogUtil.i("说话结束时调用");
     }
 
+
+    private void stopEvent(){
+        mBtInput.requestFocus();
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
+    }
     @Override
     public void onError(int error) {
+        if(speakingDialog != null && speakingDialog.isShowing()){
+            speakingDialog.dismiss();
+        }
         // 在发生错误时调用
         LogUtil.i("错误码:" + error);
     }
@@ -668,5 +730,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         LogUtil.i("事件：" + eventType);
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        //2014
+        LogUtil.i("keyCode：" + keyCode);
+        return super.onKeyDown(keyCode, event);
+    }
 
 }
