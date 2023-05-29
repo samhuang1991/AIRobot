@@ -2,13 +2,23 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:gravity="bottom"
->
+    android:gravity="bottom">
 
     <com.apps.airobot.widget.WaveView
         android:id="@+id/waveView"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         />
+    <TextView
+        android:id="@+id/tvTip"
+        android:textColor="@color/red"
+        tools:text="测试测试测试测试"
+        android:textSize="26dp"
+        android:gravity="center_vertical"
+        android:paddingStart="16dp"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"/>
 </LinearLayout>

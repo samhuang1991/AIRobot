@@ -1,5 +1,6 @@
 package com.apps.airobot.widget;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -21,17 +22,20 @@ import android.view.animation.Animation;
 import android.view.animation.LinearInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.apps.airobot.R;
 
 public class SpeakingDialog extends Dialog {
 
     private WaveView mWaveView;
+    private TextView mTvTip;
 
     public SpeakingDialog(Context context) {
         super(context);
     }
 
+    @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,12 +59,16 @@ public class SpeakingDialog extends Dialog {
         window.setBackgroundDrawable(gradientDrawable);
 
         mWaveView = findViewById(R.id.waveView);
+        mTvTip = (TextView) findViewById(R.id.tvTip);
     }
 
     public WaveView getmWaveView() {
         return mWaveView;
     }
 
+    public void setTip(String tip){
+        mTvTip.setText(tip);
+    }
     @Override
     public void show() {
         super.show();
@@ -68,6 +76,7 @@ public class SpeakingDialog extends Dialog {
 
     @Override
     public void dismiss() {
+        mTvTip.setText("");
         super.dismiss();
     }
 

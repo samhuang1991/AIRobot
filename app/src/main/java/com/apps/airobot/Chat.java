@@ -1,20 +1,5 @@
 package com.apps.airobot;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.leanback.widget.ArrayObjectAdapter;
-import androidx.leanback.widget.FocusHighlight;
-import androidx.leanback.widget.FocusHighlightHelper;
-import androidx.leanback.widget.ItemBridgeAdapter;
-import androidx.leanback.widget.VerticalGridPresenter;
-import androidx.leanback.widget.VerticalGridView;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -39,8 +24,14 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.leanback.widget.VerticalGridView;
 
 import com.alibaba.fastjson.JSONObject;
 import com.apps.airobot.widget.SpeakingDialog;
@@ -96,8 +87,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             BOT_CONTINUE = 1,
             USER_MSG = 2,
             BOT_END = 3,
-            CLEAR_HISTORY = 4,
-            STOP_RECORD = 5;
+            CLEAR_HISTORY = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,14 +140,14 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             @Override
             public void handleMessage(Message msg) {
                 switch (msg.what) {
-                    case 0:
+                    case BOT_BEGIN:
                         // Bot begin printing
                         Log.e("BOT", "BEGIN");
                         isBotTalking = true;
                         mApi.chatItems.add(current_bot_chat);
                         refreshListview();
                         break;
-                    case 1:
+                    case BOT_CONTINUE:
                         // Bot continue printing
                         Log.e("BOT", "printing: " + msg.obj.toString());
                         current_bot_chat.appendText(msg.obj.toString());
@@ -178,7 +168,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         mApi.chatItems.add(chatItem);
                         refreshListview();
                         break;
-                    case 3:
+                    case BOT_END:
                         // Bot end printing
                         Log.e("BOT", "END");
                         isBotTalking = false;
@@ -191,7 +181,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         refreshListview();
                         mBtInput.requestFocus();
                         break;
-                    case 4:
+                    case CLEAR_HISTORY:
                         // Delete History
                         history.clear();
                         mApi.chatItems.clear();
@@ -199,19 +189,12 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         mApi.showMsg(Chat.this, "记忆已清除");
                         break;
 
-                    case STOP_RECORD:
-                        stopSpeechToText();
-                        break;
                     default:
                         break;
                 }
             }
         };
         handler.sendEmptyMessage(BOT_END);
-//        showConfig();
-//        sendHandlerMsg(BOT_BEGIN, null);
-//        sendHandlerMsg(BOT_CONTINUE, "你怎么睡得着的？你这个年龄段，能睡得着觉？有点出息没有？");
-//        sendHandlerMsg(BOT_END, "");
         initRecord();
     }
 
@@ -610,13 +593,12 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
 
     private void stopSpeechToText() {
+        LogUtil.d("语音录入超时的时候调用");
         if (speechRecognizer != null) {
             speechRecognizer.stopListening();
             speechRecognizer.cancel();
             speechRecognizer.destroy();
-            if(speakingDialog != null){
-                speakingDialog.dismiss();
-            }
+            stopSpeechEvent();
         }
     }
 
@@ -635,7 +617,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-
+            intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
             // 开始语音识别
             speechRecognizer.startListening(intent);
         } else {
@@ -661,9 +643,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     public void onRmsChanged(float rmsdB) {
 
         if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
-            if (speakingDialog != null && speakingDialog.isShowing()){
-                speakingDialog.getmWaveView().setRmsdB(rmsdB);
-            }
+//            if (speakingDialog != null && speakingDialog.isShowing()){
+//                speakingDialog.getmWaveView().setRmsdB(rmsdB);
+//            }
             LogUtil.i("有效语音: " + rmsdB);
             // 当检测到有效语音输入时，取消计时
             handler.removeCallbacks(stopListeningRunnable);
@@ -684,25 +666,21 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onEndOfSpeech() {
-        if(speakingDialog != null && speakingDialog.isShowing()){
-            speakingDialog.dismiss();
-        }
+        stopSpeechEvent();
         // 在说话结束时调用
         LogUtil.i("说话结束时调用");
     }
 
-
-    private void stopEvent(){
-        mBtInput.requestFocus();
+    private void stopSpeechEvent() {
         if(speakingDialog != null && speakingDialog.isShowing()){
             speakingDialog.dismiss();
         }
     }
+
+
     @Override
     public void onError(int error) {
-        if(speakingDialog != null && speakingDialog.isShowing()){
-            speakingDialog.dismiss();
-        }
+        stopSpeechEvent();
         // 在发生错误时调用
         LogUtil.i("错误码:" + error);
     }
@@ -720,6 +698,15 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onPartialResults(Bundle partialResults) {
+        ArrayList<String> result = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        ArrayList<String> partialResultList = partialResults.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
+        if (partialResultList != null && !partialResultList.isEmpty()) {
+            String recognizedText = partialResultList.get(0);
+            if(recognizedText != null && !recognizedText.isEmpty()){
+                LogUtil.d("语音部分输出：" + recognizedText);
+                speakingDialog.setTip(recognizedText);
+            }
+        }
         // 在部分识别结果可用时调用
         LogUtil.i();
     }
