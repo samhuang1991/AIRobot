@@ -3,6 +3,7 @@ package com.apps.airobot;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -105,6 +106,17 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
 
         speakingDialog = new SpeakingDialog(Chat.this);
+        speakingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                LogUtil.i("onDismiss isFetchingSound "+isFetchingSound);
+
+                if (isFetchingSound){
+                    handler.postDelayed(stopListeningRunnable,10);
+                    LogUtil.i("onDismiss ");
+                }
+            }
+        });
 
         input = findViewById(R.id.input);
         help = findViewById(R.id.help);
@@ -134,6 +146,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         mBtInput.setOnClickListener(v->{
             startSpeechToText();
             speakingDialog.show();
+            LogUtil.i("mBtInput.setOnClickListener");
+            mBtInput.setEnabled(false);
         });
         mBtInput.requestFocus();
         handler = new Handler(Looper.getMainLooper()) {
@@ -179,6 +193,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                         current_bot_chat.setType(0);
                         current_bot_chat.setText("\t\t");
                         refreshListview();
+                        mBtInput.setEnabled(true);
                         mBtInput.requestFocus();
                         break;
                     case CLEAR_HISTORY:
@@ -631,6 +646,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     public void onReadyForSpeech(Bundle params) {
         // 在准备开始说话时调用
         LogUtil.i("在准备开始说话时调用");
+        isFetchingSound = true;
     }
 
     @Override
@@ -642,18 +658,18 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     @Override
     public void onRmsChanged(float rmsdB) {
 
-        if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
-//            if (speakingDialog != null && speakingDialog.isShowing()){
-//                speakingDialog.getmWaveView().setRmsdB(rmsdB);
-//            }
-            LogUtil.i("有效语音: " + rmsdB);
-            // 当检测到有效语音输入时，取消计时
-            handler.removeCallbacks(stopListeningRunnable);
-        }else {
-            // 无效的语音的时候开始倒计时
-            LogUtil.i("无效语音: " + rmsdB);
-            handler.postDelayed(stopListeningRunnable,LISTENING_TIMEOUT);
-        }
+//        if (Math.abs(rmsdB) > SILENCE_THRESHOLD) {
+////            if (speakingDialog != null && speakingDialog.isShowing()){
+////                speakingDialog.getmWaveView().setRmsdB(rmsdB);
+////            }
+//            LogUtil.i("有效语音: " + rmsdB);
+//            // 当检测到有效语音输入时，取消计时
+//            handler.removeCallbacks(stopListeningRunnable);
+//        }else {
+//            // 无效的语音的时候开始倒计时
+//            LogUtil.i("无效语音: " + rmsdB);
+//            handler.postDelayed(stopListeningRunnable,LISTENING_TIMEOUT);
+//        }
 
     }
 
@@ -672,9 +688,12 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     private void stopSpeechEvent() {
+        isFetchingSound = false;
         if(speakingDialog != null && speakingDialog.isShowing()){
             speakingDialog.dismiss();
         }
+        mBtInput.setEnabled(true);
+        mBtInput.requestFocus();
     }
 
 
@@ -683,6 +702,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         stopSpeechEvent();
         // 在发生错误时调用
         LogUtil.i("错误码:" + error);
+        mBtInput.setEnabled(true);
+        mBtInput.requestFocus();
     }
 
     @Override
@@ -694,6 +715,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             LogUtil.d("语音输出：" + recognizedText);
             chatGPT_direct(recognizedText);
         }
+        stopSpeechEvent();
     }
 
     @Override
