@@ -629,7 +629,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     /**
-     * 语音转换文字
+     * 语音转换文字q
      */
     private void startSpeechToText() {
 //        mIatResults.clear();
@@ -730,8 +730,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
             chatGPT_direct(recognizedText);
+            speakingDialog.setTip("");
+            stopSpeechEvent();
         }
-        stopSpeechEvent();
     }
 
     @Override
