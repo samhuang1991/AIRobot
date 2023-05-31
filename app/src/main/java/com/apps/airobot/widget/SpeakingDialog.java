@@ -74,10 +74,11 @@ public class SpeakingDialog extends Dialog {
         super.show();
     }
 
-    @Override
-    public void dismiss() {
-        mTvTip.setText("");
-        super.dismiss();
+
+
+    public void dismissAndSetTip(){
+        setTip("");
+        dismiss();
     }
 
 }

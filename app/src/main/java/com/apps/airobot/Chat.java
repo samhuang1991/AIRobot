@@ -36,6 +36,11 @@ import androidx.leanback.widget.VerticalGridView;
 
 import com.alibaba.fastjson.JSONObject;
 import com.apps.airobot.widget.SpeakingDialog;
+import com.iflytek.cloud.RecognizerListener;
+import com.iflytek.cloud.RecognizerResult;
+import com.iflytek.cloud.SpeechError;
+
+import org.json.JSONException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -44,6 +49,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -63,6 +70,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     private static final int LISTENING_TIMEOUT = 1500; // 设置超时时间为5秒
     private static final int SILENCE_THRESHOLD = 1; // 设置音量阈值
+
+    // 用HashMap存储听写结果
+    private HashMap<String, String> mIatResults = new LinkedHashMap<>();
     boolean isBotTalking = false,
             isConnecting = false,
             isFetchingSound = false;
@@ -71,6 +81,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     ArrayList<String> history;
     ChatItem current_bot_chat;
     SpeakingDialog speakingDialog;
+    Iflytek mIflytek;
 
 
     private VerticalGridView verticalGridView;
@@ -117,8 +128,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 }
             }
         });
-
-        input = findViewById(R.id.input);
+         mIflytek = new Iflytek(this,mRecognizerListener );
+        input = findViewById(R.id.input); 
         help = findViewById(R.id.help);
         start = findViewById(R.id.start);
         config = findViewById(R.id.config);
@@ -621,6 +632,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
      * 语音转换文字
      */
     private void startSpeechToText() {
+//        mIatResults.clear();
+//        mIflytek.startVoice();
+
+
+
         //检查当前系统有没有语音识别服务,该方法返回false在我们调用*SpeechRecognizer.startListening();*方法的时候会日志中发现这行log
         //no selected voice recognition service
         boolean recognitionAvailable = SpeechRecognizer.isRecognitionAvailable(this);
@@ -690,7 +706,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     private void stopSpeechEvent() {
         isFetchingSound = false;
         if(speakingDialog != null && speakingDialog.isShowing()){
-            speakingDialog.dismiss();
+            speakingDialog.dismissAndSetTip();
         }
         mBtInput.setEnabled(true);
         mBtInput.requestFocus();
@@ -720,7 +736,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public void onPartialResults(Bundle partialResults) {
-        ArrayList<String> result = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         ArrayList<String> partialResultList = partialResults.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
         if (partialResultList != null && !partialResultList.isEmpty()) {
             String recognizedText = partialResultList.get(0);
@@ -744,6 +759,98 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         //2014
         LogUtil.i("keyCode：" + keyCode);
         return super.onKeyDown(keyCode, event);
+    }
+
+
+    /**
+     * 听写监听器。
+     */
+    private RecognizerListener mRecognizerListener = new RecognizerListener() {
+
+        @Override
+        public void onBeginOfSpeech() {
+            // 此回调表示：sdk内部录音机已经准备好了，用户可以开始语音输入
+            LogUtil.d("开始说话");
+        }
+
+        @Override
+        public void onError(SpeechError error) {
+            // Tips：
+            // 错误码：10118(您没有说话)，可能是录音机权限被禁，需要提示用户打开应用的录音权限。
+            LogUtil.d("onError " + error.getPlainDescription(true));
+            stopSpeechEvent();
+
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+            // 此回调表示：检测到了语音的尾端点，已经进入识别过程，不再接受语音输入
+            LogUtil.d("结束说话");
+        }
+
+        @Override
+        public void onResult(RecognizerResult results, boolean isLast) {
+            printResult(results,isLast);
+        }
+
+        @Override
+        public void onVolumeChanged(int volume, byte[] data) {
+//            LogUtil.d("当前正在说话，音量大小 = " + volume + " 返回音频数据 = " + data.length);
+        }
+
+        @Override
+        public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
+            // 以下代码用于获取与云端的会话id，当业务出错时将会话id提供给技术支持人员，可用于查询会话日志，定位出错原因
+            // 若使用本地能力，会话id为null
+            //	if (SpeechEvent.EVENT_SESSION_ID == eventType) {
+            //		String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
+            //		Log.d(TAG, "session id =" + sid);
+            //	}
+        }
+    };
+
+
+    // 读取动态修正返回结果示例代码
+    private void printResult(RecognizerResult results,boolean isLast) {
+        String text = JsonParser.parseIatResult(results.getResultString());
+
+        String sn = null;
+        String pgs = null;
+        String rg = null;
+        // 读取json结果中的sn字段
+        try {
+            org.json.JSONObject resultJson = new org.json.JSONObject(results.getResultString());
+            sn = resultJson.optString("sn");
+            pgs = resultJson.optString("pgs");
+            rg = resultJson.optString("rg");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        //如果pgs是rpl就在已有的结果中删除掉要覆盖的sn部分
+        if (pgs.equals("rpl")) {
+            String[] strings = rg.replace("[", "").replace("]", "").split(",");
+            int begin = Integer.parseInt(strings[0]);
+            int end = Integer.parseInt(strings[1]);
+            for (int i = begin; i <= end; i++) {
+                mIatResults.remove(i+"");
+            }
+        }
+
+        mIatResults.put(sn, text);
+        StringBuffer resultBuffer = new StringBuffer();
+        for (String key : mIatResults.keySet()) {
+            resultBuffer.append(mIatResults.get(key));
+        }
+        String result = resultBuffer.toString();
+        speakingDialog.setTip(result);
+        if (isLast) {
+            chatGPT_direct(result);
+            stopSpeechEvent();
+            LogUtil.d( "onResult 结束");
+        }else {
+            speakingDialog.setTip(result);
+        }
+        LogUtil.d( "录入内容："+result);
     }
 
 }
