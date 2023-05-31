@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AsyncPlayer;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -35,6 +37,7 @@ import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.VerticalGridView;
 
 import com.alibaba.fastjson.JSONObject;
+import com.apps.airobot.util.NetStateUtils;
 import com.apps.airobot.widget.SpeakingDialog;
 import com.iflytek.cloud.RecognizerListener;
 import com.iflytek.cloud.RecognizerResult;
@@ -123,7 +126,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 LogUtil.i("onDismiss isFetchingSound "+isFetchingSound);
 
                 if (isFetchingSound){
-                    handler.postDelayed(stopListeningRunnable,10);
+//                    handler.postDelayed(stopListeningRunnable,10);
+                    handler.post(stopListeningRunnable);
                     LogUtil.i("onDismiss ");
                 }
             }
@@ -155,6 +159,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 //            chatGPT_direct();
         });
         mBtInput.setOnClickListener(v->{
+            //检查网络
+            if (NetStateUtils.getNetworkType(Chat.this) == 0){
+                Toast.makeText(Chat.this,"请检查网络",Toast.LENGTH_SHORT).show();
+                return;
+            }
             startSpeechToText();
             speakingDialog.show();
             LogUtil.i("mBtInput.setOnClickListener");
@@ -730,9 +739,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
             chatGPT_direct(recognizedText);
-            speakingDialog.setTip("");
-            stopSpeechEvent();
         }
+        stopSpeechEvent();
     }
 
     @Override
