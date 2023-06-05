@@ -92,7 +92,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     ArrayList<String> history;
     ChatItem current_bot_chat;
     SpeakingDialog speakingDialog;
-//    Iflytek mIflytek;
+    //    Iflytek mIflytek;
     WebSocketClient webSocketClient;
     int reconnectCount = 0; // 重连次数
     String onPartialRecognizedText;
@@ -141,9 +141,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         speakingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
-                LogUtil.i("onDismiss isFetchingSound "+isFetchingSound);
+                LogUtil.i("onDismiss isFetchingSound " + isFetchingSound);
 
-                if (isFetchingSound){
+                if (isFetchingSound) {
 //                    handler.post(stopListeningRunnable);
 //                    initRecord();
                     if (speechRecognizer != null) {
@@ -155,7 +155,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             }
         });
 //         mIflytek = new Iflytek(this,mRecognizerListener );
-        input = findViewById(R.id.input); 
+        input = findViewById(R.id.input);
         help = findViewById(R.id.help);
         start = findViewById(R.id.start);
         config = findViewById(R.id.config);
@@ -171,11 +171,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             });
             b.show();
         });
-        if(useWebSocket){
-            if(null == webSocketClient){
+        if (useWebSocket) {
+            if (null == webSocketClient) {
                 mApi.showMsg(this, "尝试连接至服务器...");
                 connectToVps();
-            }else if(!webSocketClient.isClosed()){
+            } else if (!webSocketClient.isClosed()) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setMessage("已连接至服务器，确定强制重新连接吗？");
                 builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
@@ -183,7 +183,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                     mApi.showMsg(this, "重新连接服务器...");
                     webSocketClient = null;
                     isConnecting = false;
-                    if(isBotTalking){
+                    if (isBotTalking) {
                         sendHandlerMsg(BOT_END, "");
                     }
                     connectToVps();
@@ -197,10 +197,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         start.setOnClickListener(v -> {
 //            chatGPT_direct();
         });
-        mBtInput.setOnClickListener(v->{
+        mBtInput.setOnClickListener(v -> {
             //检查网络
-            if (NetStateUtils.getNetworkType(Chat.this) == 0){
-                Toast.makeText(Chat.this,"请检查网络",Toast.LENGTH_SHORT).show();
+            if (NetStateUtils.getNetworkType(Chat.this) == 0) {
+                Toast.makeText(Chat.this, "请检查网络", Toast.LENGTH_SHORT).show();
                 return;
             }
             startSpeechToText();
@@ -272,68 +272,67 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         initRecord();
     }
 
-    void connectToVps(){
-        if((null != webSocketClient) && isConnecting){
+    void connectToVps() {
+        if ((null != webSocketClient) && isConnecting) {
             return;
         }
-        runOnUiThread(()->{
-            new Thread(()->{
-                uuid = UUID.randomUUID();
+        new Thread(() -> {
+            uuid = UUID.randomUUID();
+            serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
 
-                serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
-
-                try {
-                    webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
-                    webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
-                    if(webSocketClient.connectBlocking()){
-                        runOnUiThread(()->{
-                            mApi.showMsg(this, "成功连接至服务器");
-                        });
-                    }else{
-                        sendHandlerMsg(BOT_BEGIN, null);
-                        sendHandlerMsg(BOT_CONTINUE, "Failed to connect to the server");
-                        sendHandlerMsg(BOT_END, null);
-                    }
-                }catch (URISyntaxException | InterruptedException e){
-                    e.printStackTrace();
+            try {
+                webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
+                webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
+                if (webSocketClient.connectBlocking()) {
+                    runOnUiThread(() -> {
+                        mApi.showMsg(this, "成功连接至服务器");
+                    });
+                } else {
+                    sendHandlerMsg(BOT_BEGIN, null);
+                    sendHandlerMsg(BOT_CONTINUE, "Failed to connect to the server");
+                    sendHandlerMsg(BOT_END, null);
                 }
-            }).start();
-        });
+            } catch (URISyntaxException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
         isConnecting = true;
     }
 
     class WebSocketClientEx extends WebSocketClient {
-        WebSocketClientEx(URI uri){
+        WebSocketClientEx(URI uri) {
             super(uri);
         }
+
         @Override
         public void onOpen(ServerHandshake handshakeData) {
             isConnecting = false;
             isBotTalking = false;
         }
+
         @Override
         public void onMessage(String message) {
             Log.e("MSG1", message);
-            if(isBotTalking){
-                if(message.equals(SEND_END)){
+            if (isBotTalking) {
+                if (message.equals(SEND_END)) {
                     sendHandlerMsg(BOT_END, bot_record);
                     //Log.e("Msg", bot_record);
                     bot_record = "";
-                }else {
+                } else {
                     JSONObject object = JSONObject.parseObject(message);
-                    if (object != null){
+                    if (object != null) {
                         Log.e("object  ", object.toString());
                         String role = object.getString("role");
-                        LogUtil.i("role == "+role);
+                        LogUtil.i("role == " + role);
                         String content = object.getString("content");
-                        LogUtil.i("content == "+content);
+                        LogUtil.i("content == " + content);
                         bot_record += content;
-                        if (content != null){
+                        if (content != null) {
                             sendHandlerMsg(BOT_CONTINUE, content);
                         }
                         int code = object.getIntValue("code");
-                        if (code != 0){
-                            sendHandlerMsg(BOT_END,content);
+                        if (code != 0) {
+                            sendHandlerMsg(BOT_END, content);
                         }
                     }
                 }
@@ -342,7 +341,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
         @Override
         public void onClose(int code, String reason, boolean remote) {
-            new Thread(()->{
+            new Thread(() -> {
                 isConnecting = false;
                 isBotTalking = false;
                 isFetchingSound = false;
@@ -351,9 +350,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 Log.e("Close", reason);
             }).start();
         }
+
         @Override
         public void onError(Exception ex) {
-            new Thread(()->{
+            new Thread(() -> {
                 isConnecting = false;
                 isBotTalking = false;
                 isFetchingSound = false;
@@ -400,7 +400,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             }
         }
         prompt.append("Q: ").append(context).append("\n\nA:");
-        LogUtil.i("prompt == "+prompt.toString());
+        LogUtil.i("prompt == " + prompt.toString());
         return prompt.toString();
     }
 
@@ -466,15 +466,15 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                             JSONObject choices = JSONObject.parseObject(object.getString("choices")
                                     .replace('[', ' ')
                                     .replace(']', ' '));
-                            LogUtil.i("object == "+object.toString());
+                            LogUtil.i("object == " + object.toString());
                             //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"role":"assistant"},"index":0}],"object":"chat.completion.chunk"}
                             //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"delta":{"content":"连接"},"index":0}],"object":"chat.completion.chunk"}
                             //{"created":1685088378,"model":"gpt-3.5-turbo-0301","id":"chatcmpl-7KMkkvyX9jbHAqVz3k96vjMiLmBG1","choices":[{"finish_reason":"stop","delta":{},"index":0}],"object":"chat.completion.chunk"}
                             String s;
                             if (mApi.model.equals("gpt-3.5-turbo") || mApi.model.equals("gpt-3.5-turbo-0301")) {
                                 s = JSONObject.parseObject(choices.getString("delta")).getString("content");
-                                LogUtil.i("s == "+s);
-                                if (s==null){
+                                LogUtil.i("s == " + s);
+                                if (s == null) {
                                     s = "";
                                 }
                             } else {
@@ -507,19 +507,19 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
 
     private void chatGPT_webSocket(String recognizedText) {
-        if(recognizedText.equals("")){
+        if (recognizedText.equals("")) {
             mApi.showMsg(this, "请先输入文本");
-        }else{
-            if(!(null == webSocketClient) && webSocketClient.isOpen()){
-                if(isBotTalking){
+        } else {
+            if (!(null == webSocketClient) && webSocketClient.isOpen()) {
+                if (isBotTalking) {
                     mApi.showMsg(this, "请等待 AI 回答结束");
                     return;
                 }
                 webSocketClient.send(recognizedText);
                 sendHandlerMsg(USER_MSG, recognizedText);
                 sendHandlerMsg(BOT_BEGIN, null);
-            }else{
-                if (reconnectCount == 0){
+            } else {
+                if (reconnectCount == 0) {
                     mApi.showMsg(this, "未连接至服务器");
                     //尝试重连一次
                     connectToVpsAndSengMsg(recognizedText);
@@ -528,38 +528,36 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         }
     }
 
-    void connectToVpsAndSengMsg(String recognizedText){
+    void connectToVpsAndSengMsg(String recognizedText) {
         reconnectCount++;
-        if((null != webSocketClient) && isConnecting){
+        if ((null != webSocketClient) && isConnecting) {
             return;
         }
-        runOnUiThread(()->{
-            new Thread(()->{
-                uuid = UUID.randomUUID();
+        new Thread(() -> {
+            uuid = UUID.randomUUID();
 
-                serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
+            serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
 
-                try {
-                    webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
-                    webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
-                    if(webSocketClient.connectBlocking()){
-                        runOnUiThread(()->{
-                            mApi.showMsg(this, "已重新连接至服务器");
-                            isConnecting = true;
-                            chatGPT_webSocket(recognizedText);
-                        });
-                    }
-                }catch (URISyntaxException | InterruptedException e){
-                    e.printStackTrace();
+            try {
+                webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
+                webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
+                if (webSocketClient.connectBlocking()) {
+                    runOnUiThread(() -> {
+                        mApi.showMsg(this, "已重新连接至服务器");
+                        isConnecting = true;
+                        chatGPT_webSocket(recognizedText);
+                    });
                 }
-            }).start();
-        });
+            } catch (URISyntaxException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 reconnectCount = 0;
             }
-        },10000);
+        }, 10000);
     }
 
     void initConfigs(View view) {
@@ -811,10 +809,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     private void stopSpeechToText() {
         LogUtil.d("语音录入超时的时候调用");
 
-        if (useWebSocket){
+        if (useWebSocket) {
             //websocket 发送消息
             chatGPT_webSocket(onPartialRecognizedText);
-        }else {
+        } else {
             chatGPT_direct(onPartialRecognizedText);
         }
 
@@ -872,17 +870,17 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!isPartialResult){
+                if (!isPartialResult) {
                     //3s后还没有任何识别
                     if (speechRecognizer != null) {
                         speechRecognizer.stopListening();
                         speechRecognizer.cancel();
                         stopSpeechEvent();
                     }
-                    mApi.showMsg(Chat.this,"识别超时");
+                    mApi.showMsg(Chat.this, "识别超时");
                 }
             }
-        },3000);
+        }, 3000);
 
     }
 
@@ -905,6 +903,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     }
 
     private Runnable stopListeningRunnable = this::stopSpeechToText;
+
     @Override
     public void onBufferReceived(byte[] buffer) {
         // 在获取到语音输入的音频数据时调用
@@ -920,7 +919,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     private void stopSpeechEvent() {
         isFetchingSound = false;
-        if(speakingDialog != null && speakingDialog.isShowing()){
+        if (speakingDialog != null && speakingDialog.isShowing()) {
             speakingDialog.dismissAndSetTip();
         }
         mBtInput.setEnabled(true);
@@ -968,7 +967,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 errMsg = "recognizer other error";
                 break;
         }
-        mApi.showMsg(Chat.this,errMsg);
+        mApi.showMsg(Chat.this, errMsg);
         LogUtil.i(errMsg);
     }
 
@@ -983,10 +982,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         if (result != null && !result.isEmpty()) {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
-            if (useWebSocket){
+            if (useWebSocket) {
                 //websocket 发送消息
                 chatGPT_webSocket(recognizedText);
-            }else {
+            } else {
                 chatGPT_direct(recognizedText);
             }
         }
@@ -1002,7 +1001,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         ArrayList<String> partialResultList = partialResults.getStringArrayList("android.speech.extra.UNSTABLE_TEXT");
         if (partialResultList != null && !partialResultList.isEmpty()) {
             String recognizedText = partialResultList.get(0);
-            if(recognizedText != null && !recognizedText.isEmpty()){
+            if (recognizedText != null && !recognizedText.isEmpty()) {
                 LogUtil.d("语音部分输出：" + recognizedText);
                 speakingDialog.setTip(recognizedText);
                 onPartialRecognizedText = recognizedText;
