@@ -17,7 +17,7 @@ import static com.apps.airobot.MyApplication.getContext;
  */
 public final class LogUtil {
 
-    private static String tag = "mylog-tvsettings";
+    private static String tag = "mylog-airobot";
     private static String className;//类名
     private static String methodName;//方法名
     private static int lineNumber;//行数

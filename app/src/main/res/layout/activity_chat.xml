@@ -21,7 +21,7 @@
         android:layout_weight="9"
         android:background="@color/chat_background"
         android:orientation="vertical"
-        tools:context=".Chat">
+        tools:context=".ui.activity.Chat">
 
         <androidx.leanback.widget.VerticalGridView
             android:id="@+id/vGridView"

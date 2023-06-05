@@ -6,7 +6,13 @@
     android:orientation="vertical"
     android:gravity="bottom">
 
-    <com.apps.airobot.widget.WaveView
+    <com.apps.airobot.ui.widget.SoundRecordView
+        android:id="@+id/soundRecordView"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        />
+
+    <com.apps.airobot.ui.widget.WaveView
         android:id="@+id/waveView"
         android:visibility="gone"
         android:layout_width="match_parent"

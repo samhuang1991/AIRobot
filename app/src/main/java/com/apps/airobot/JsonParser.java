@@ -1,7 +1,5 @@
 package com.apps.airobot;
 
-import com.iflytek.cloud.RecognizerResult;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
