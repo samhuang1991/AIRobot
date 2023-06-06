@@ -63,6 +63,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +77,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class Chat extends AppCompatActivity implements RecognitionListener {
-    static UUID uuid;
+
+    static UUID uuid = UUID.randomUUID();
     int selectedItemPosition = -1;
     private static boolean useWebSocket = true;
     private static final int LISTENING_TIMEOUT = 1500; // 设置超时时间为5秒
@@ -96,7 +99,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     WebSocketClient webSocketClient;
     int reconnectCount = 0; // 重连次数
     String onPartialRecognizedText;
-
+    // 发送定时请求
+    Timer timer = new Timer();
 
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
@@ -115,12 +119,11 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             BOT_END = 3,
             CLEAR_HISTORY = 4;
 
-    String serverURL = "",
+    String serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/",
             bot_record = "",
             soundFilePath,
             SEND_END = "[DONE]",
-            FILE_END = "///**END_OF_FILE**///",
-            FILE_ERROR = "///**FILE_ERROR**///";
+            SEND_PING = "[PING]";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -277,9 +280,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             return;
         }
         new Thread(() -> {
-            uuid = UUID.randomUUID();
-            serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
-
             try {
                 webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
                 webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
@@ -287,6 +287,16 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                     runOnUiThread(() -> {
                         mApi.showMsg(this, "成功连接至服务器");
                     });
+                    // 发送定时请求
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            // 发送请求
+                            if (webSocketClient != null){
+                                webSocketClient.send(SEND_PING);
+                            }
+                        }
+                    }, 0, 20000);
                 } else {
                     sendHandlerMsg(BOT_BEGIN, null);
                     sendHandlerMsg(BOT_CONTINUE, "Failed to connect to the server");
@@ -297,6 +307,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             }
         }).start();
         isConnecting = true;
+
     }
 
     class WebSocketClientEx extends WebSocketClient {
@@ -313,6 +324,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         @Override
         public void onMessage(String message) {
             Log.e("MSG1", message);
+            if (message.equals("[PING-ALIVE]")){
+                return;
+            }
             if (isBotTalking) {
                 if (message.equals(SEND_END)) {
                     sendHandlerMsg(BOT_END, bot_record);
@@ -358,7 +372,9 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 isBotTalking = false;
                 isFetchingSound = false;
                 webSocketClient = null;
-                mApi.showMsg(Chat.this, "服务器连接错误： " + ex.getMessage());
+                runOnUiThread(() -> {
+                    mApi.showMsg(Chat.this, "服务器连接错误： " + ex.getMessage());
+                });
                 Log.e("Exception", ex.getMessage());
             }).start();
         }
@@ -534,9 +550,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             return;
         }
         new Thread(() -> {
-            uuid = UUID.randomUUID();
-
-            serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/";
 
             try {
                 webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
@@ -857,6 +870,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     public void onReadyForSpeech(Bundle params) {
         // 在准备开始说话时调用
         LogUtil.i("在准备开始说话时调用");
+        speakingDialog.setTip("请说，我在听...");
         isFetchingSound = true;
         isPartialResult = false;
     }
@@ -982,6 +996,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         if (result != null && !result.isEmpty()) {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
+            speakingDialog.setTip(recognizedText);
             if (useWebSocket) {
                 //websocket 发送消息
                 chatGPT_webSocket(recognizedText);

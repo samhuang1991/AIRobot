@@ -65,6 +65,7 @@ public class SpeakingDialog extends Dialog {
     public void show() {
         super.show();
         mSoundRecordView.startAnimation();
+        setTip("");
     }
 
 
