@@ -123,7 +123,13 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             bot_record = "",
             soundFilePath,
             SEND_END = "[DONE]",
-            SEND_PING = "[PING]";
+            SEND_PING = "[PING]",
+            SEND_STOP = "[STOP]";
+
+    /**
+     * 是否需要断线重连。默认ture
+     */
+    boolean isNeedReconnect = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -206,8 +212,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 Toast.makeText(Chat.this, "请检查网络", Toast.LENGTH_SHORT).show();
                 return;
             }
-            startSpeechToText();
             speakingDialog.show();
+            startSpeechToText();
             LogUtil.i("mBtInput.setOnClickListener");
             mBtInput.setEnabled(false);
         });
@@ -273,6 +279,26 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         };
         handler.sendEmptyMessage(BOT_END);
         initRecord();
+
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+
+                if (NetStateUtils.getNetworkType(Chat.this) == 0){
+                    Log.e("timer", "网络错误");
+                    return;
+                }
+
+                if (webSocketClient != null && webSocketClient.isOpen()) {
+                    // WebSocket 连接是打开的
+                    Log.e("timer", "连接正常");
+                } else {
+                    // WebSocket 连接不是打开的
+                    connectToVps();
+                    Log.e("timer", "每5s重连一次");
+                }
+            }
+        }, 0, 5000);
     }
 
     void connectToVps() {
@@ -287,16 +313,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                     runOnUiThread(() -> {
                         mApi.showMsg(this, "成功连接至服务器");
                     });
-                    // 发送定时请求
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            // 发送请求
-                            if (webSocketClient != null){
-                                webSocketClient.send(SEND_PING);
-                            }
-                        }
-                    }, 0, 20000);
                 } else {
                     sendHandlerMsg(BOT_BEGIN, null);
                     sendHandlerMsg(BOT_CONTINUE, "Failed to connect to the server");
@@ -355,28 +371,27 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
         @Override
         public void onClose(int code, String reason, boolean remote) {
-            new Thread(() -> {
-                isConnecting = false;
-                isBotTalking = false;
-                isFetchingSound = false;
-                webSocketClient = null;
+            isConnecting = false;
+            isBotTalking = false;
+            isFetchingSound = false;
+            webSocketClient = null;
+            //网络正常就应该继续重新连接
+            if (isNeedReconnect && NetStateUtils.getNetworkType(Chat.this) != 0){
+                connectToVps();
+            }else {
                 mApi.showMsg(Chat.this, "服务器连接断开");
-                Log.e("Close", reason);
-            }).start();
+            }
+            Log.e("Close", reason);
         }
 
         @Override
         public void onError(Exception ex) {
-            new Thread(() -> {
-                isConnecting = false;
-                isBotTalking = false;
-                isFetchingSound = false;
-                webSocketClient = null;
-                runOnUiThread(() -> {
-                    mApi.showMsg(Chat.this, "服务器连接错误： " + ex.getMessage());
-                });
-                Log.e("Exception", ex.getMessage());
-            }).start();
+            isConnecting = false;
+            isBotTalking = false;
+            isFetchingSound = false;
+            webSocketClient = null;
+            mApi.showMsg(Chat.this, "服务器连接错误： " + ex.getMessage());
+            Log.e("onError", ex.getMessage());
         }
     }
 
@@ -546,11 +561,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     void connectToVpsAndSengMsg(String recognizedText) {
         reconnectCount++;
-        if ((null != webSocketClient) && isConnecting) {
+        if (isConnecting) {
             return;
         }
         new Thread(() -> {
-
             try {
                 webSocketClient = new WebSocketClientEx(new URI(serverURL + uuid));
                 webSocketClient.setConnectionLostTimeout((int) mApi.RequestTimeout);
@@ -801,6 +815,10 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
     @Override
     protected void onDestroy() {
         deleteCacheFiles();
+        if (webSocketClient != null){
+            isNeedReconnect = false;
+            webSocketClient.close();
+        }
         super.onDestroy();
     }
 
@@ -875,27 +893,27 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         isPartialResult = false;
     }
 
+    private Runnable recognizeTimeoutRunnable = this::recognizeTimeout;
+
+    private void recognizeTimeout() {
+        if (!isPartialResult) {
+            //3s后还没有任何识别
+            if (speechRecognizer != null) {
+                speechRecognizer.stopListening();
+                speechRecognizer.cancel();
+                stopSpeechEvent();
+            }
+            mApi.showMsg(Chat.this, "识别超时");
+            LogUtil.i("识别超时");
+        }
+    }
     @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onBeginningOfSpeech() {
         // 在开始说话时调用
         LogUtil.i("在开始说话时调用");
         //设置3s后，还没有onPartialResults语音部分识别回调，则关闭dialog
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (!isPartialResult) {
-                    //3s后还没有任何识别
-                    if (speechRecognizer != null) {
-                        speechRecognizer.stopListening();
-                        speechRecognizer.cancel();
-                        stopSpeechEvent();
-                    }
-                    mApi.showMsg(Chat.this, "识别超时");
-                }
-            }
-        }, 3000);
-
+        handler.postDelayed(recognizeTimeoutRunnable, 3000);
     }
 
     @Override
@@ -915,7 +933,6 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 //        }
 
     }
-
     private Runnable stopListeningRunnable = this::stopSpeechToText;
 
     @Override
@@ -940,7 +957,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         mBtInput.requestFocus();
     }
 
-
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     @Override
     public void onError(int error) {
         stopSpeechEvent();
@@ -951,38 +968,40 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         String errMsg = "";
         switch (error) {
             case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                errMsg = "recognizer network timeout";
+                errMsg = "网络链接超时";
                 break;
             case SpeechRecognizer.ERROR_NETWORK:
-                errMsg = "recognizer network error";
+                errMsg = "网络错误或者没有权限";
                 break;
             case SpeechRecognizer.ERROR_AUDIO:
-                errMsg = "recognizer audio error";
-                break;
-            case SpeechRecognizer.ERROR_SERVER:
-                errMsg = "recognizer server error";
+                errMsg = "音频发生错误";
                 break;
             case SpeechRecognizer.ERROR_CLIENT:
-                errMsg = "recognizer client error";
+                errMsg = ("连接出错");
+                break;
+            case SpeechRecognizer.ERROR_SERVER:
+                errMsg = ("服务器出错");
                 break;
             case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                errMsg = "recognizer speech timeout";
+                errMsg = ("什么也没有听到");
                 break;
             case SpeechRecognizer.ERROR_NO_MATCH:
-                errMsg = "recognizer no match";
+                errMsg = ("没有匹配到合适的结果");
                 break;
             case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                errMsg = "recognizer busy";
+                errMsg = ("RecognitionService已经启动,请稍后");
                 break;
             case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                errMsg = "recognizer insufficient permissions";
+                errMsg = ("请赋予APP权限,另请（Android6.0以上）确认动态申请权限");
                 break;
             default:
-                errMsg = "recognizer other error";
                 break;
         }
         mApi.showMsg(Chat.this, errMsg);
         LogUtil.i(errMsg);
+        if (handler.hasCallbacks(recognizeTimeoutRunnable)) {
+            handler.removeCallbacks(recognizeTimeoutRunnable);
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.Q)
