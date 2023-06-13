@@ -14,6 +14,16 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
 
     }
 
+    public interface OnItemClickListener{
+        void onItemClickListener(View v);
+    };
+
+    private OnItemClickListener onItemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener onItemClickListener) {
+        this.onItemClickListener = onItemClickListener;
+    }
+
     @Override
     public MessageListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view;
@@ -29,6 +39,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             public void onClick(View v) {
                 // 处理子项点击事件
                 LogUtil.i("item onClick!");
+                onItemClickListener.onItemClickListener(v);
             }
         });
 

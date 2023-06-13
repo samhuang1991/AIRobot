@@ -124,7 +124,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             soundFilePath,
             SEND_END = "[DONE]",
             SEND_PING = "[PING]",
-            SEND_STOP = "[STOP]";
+            SEND_STOP = "[STOP]",
+            SEND_STOP_SUCCESS = "[STOP-SUCCESS]";
 
     /**
      * 是否需要断线重连。默认ture
@@ -145,6 +146,13 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
         messageListAdapter = new MessageListAdapter();
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
+        messageListAdapter.setOnItemClickListener(new MessageListAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClickListener(View v) {
+                LogUtil.i("item onClick!");
+                startSpeech();
+            }
+        });
 
         speakingDialog = new SpeakingDialog(Chat.this);
         speakingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
@@ -207,15 +215,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 //            chatGPT_direct();
         });
         mBtInput.setOnClickListener(v -> {
-            //检查网络
-            if (NetStateUtils.getNetworkType(Chat.this) == 0) {
-                Toast.makeText(Chat.this, "请检查网络", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            speakingDialog.show();
-            startSpeechToText();
-            LogUtil.i("mBtInput.setOnClickListener");
-            mBtInput.setEnabled(false);
+            startSpeech();
         });
         mBtInput.requestFocus();
         handler = new Handler(Looper.getMainLooper()) {
@@ -291,14 +291,29 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
                 if (webSocketClient != null && webSocketClient.isOpen()) {
                     // WebSocket 连接是打开的
-                    Log.e("timer", "连接正常");
                 } else {
                     // WebSocket 连接不是打开的
                     connectToVps();
                     Log.e("timer", "每5s重连一次");
                 }
+
             }
-        }, 0, 5000);
+        }, 0, 10000);
+    }
+
+    private void startSpeech() {
+        //检查网络
+        if (NetStateUtils.getNetworkType(Chat.this) == 0) {
+            Toast.makeText(Chat.this, "请检查网络", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isBotTalking){
+            webSocketClient.send(SEND_STOP);
+        }
+        speakingDialog.show();
+        startSpeechToText();
+        LogUtil.i("mBtInput.setOnClickListener");
+        mBtInput.setEnabled(false);
     }
 
     void connectToVps() {
@@ -344,7 +359,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 return;
             }
             if (isBotTalking) {
-                if (message.equals(SEND_END)) {
+                if (message.equals(SEND_END)  || message.equals(SEND_STOP_SUCCESS)) {
                     sendHandlerMsg(BOT_END, bot_record);
                     //Log.e("Msg", bot_record);
                     bot_record = "";
@@ -392,6 +407,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             webSocketClient = null;
             mApi.showMsg(Chat.this, "服务器连接错误： " + ex.getMessage());
             Log.e("onError", ex.getMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -875,6 +891,8 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
             intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+            intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 2000);
+
             // 开始语音识别
             speechRecognizer.startListening(intent);
         } else {
@@ -977,7 +995,7 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
                 errMsg = "音频发生错误";
                 break;
             case SpeechRecognizer.ERROR_CLIENT:
-                errMsg = ("连接出错");
+                errMsg = ("连接出错或取消");
                 break;
             case SpeechRecognizer.ERROR_SERVER:
                 errMsg = ("服务器出错");
@@ -1058,8 +1076,13 @@ public class Chat extends AppCompatActivity implements RecognitionListener {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        //2014
         LogUtil.i("keyCode：" + keyCode);
+
+        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER){
+            startSpeech();
+            return true;
+        }
+
         return super.onKeyDown(keyCode, event);
     }
 
