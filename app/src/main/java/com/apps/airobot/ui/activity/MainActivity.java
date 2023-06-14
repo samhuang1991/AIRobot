@@ -28,7 +28,8 @@ public class MainActivity extends AppCompatActivity {
         mApi.use_vits = Boolean.parseBoolean((mApi.sharedPreferences.getString("use_vits", "false")));
         mApi.vits_speaker = mApi.sharedPreferences.getString("vits_model", "派蒙");
         new Handler().postDelayed(()->{
-            startActivity(new Intent(this, Chat.class));
+//            startActivity(new Intent(this, Chat.class));
+            startActivity(new Intent(this, ChatActivity.class));
         }, 200);
     }
 
