@@ -20,7 +20,7 @@ public class WebSocketAdapter {
     }
 
     private WebSocketAdapter() {
-        // 私有构造函数，防止外部创建实例
+
     }
 
     public static WebSocketAdapter getInstance() {
@@ -108,11 +108,8 @@ public class WebSocketAdapter {
     }
 
     public enum ConnectionState {
-        CONNECTING,
         CONNECTED,
-        CLOSING,
         CLOSED,
-        RECONNECTING,
         ERROR
     }
 
