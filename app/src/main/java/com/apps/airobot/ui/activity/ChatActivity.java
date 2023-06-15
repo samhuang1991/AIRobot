@@ -1,22 +1,15 @@
 package com.apps.airobot.ui.activity;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.VerticalGridView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AsyncPlayer;
 import android.media.MediaPlayer;
@@ -31,13 +24,7 @@ import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONObject;
@@ -56,31 +43,18 @@ import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SpeechEvent;
 import com.iflytek.cloud.SynthesizerListener;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 
 public class ChatActivity extends AppCompatActivity implements RecognitionListener, SynthesizerListener {
 
@@ -111,7 +85,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
-    ImageView mBtInput;
+    ImageView mBtInput,mBtVoice;
     Handler handler;
     long mBackPressed;
     static final int BOT_BEGIN = 0,
@@ -187,13 +161,16 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
             }
         });
         mBtInput = findViewById(R.id.bt_input);
-
+        mBtVoice = findViewById(R.id.bt_voice);
         webSocketAdapter = WebSocketAdapter.getInstance();
         connectWebSocket();
         subscribeToMessages();
 
         mBtInput.setOnClickListener(v -> {
             startSpeech();
+        });
+        mBtVoice.setOnClickListener(v->{
+            switchVoice();
         });
         mBtInput.requestFocus();
         handler = new Handler(Looper.getMainLooper()) {
@@ -270,6 +247,11 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     }
 
+    private void switchVoice() {
+        isSpeak = !isSpeak;
+        mBtVoice.setImageResource(isSpeak?R.drawable.slector_voice_on :R.drawable.slector_voice_off);
+    }
+
     private void removePromptFragment() {
         // 使用FragmentManager移除当前Fragment
         if (promptFragment != null) {
@@ -334,6 +316,9 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
 
     private void startSpeech() {
+        if(mIflyTts != null){
+            mIflyTts.stopSpeaking();
+        }
         //检查网络
         if (NetStateUtils.getNetworkType(ChatActivity.this) == 0) {
             Toast.makeText(ChatActivity.this, "请检查网络", Toast.LENGTH_SHORT).show();

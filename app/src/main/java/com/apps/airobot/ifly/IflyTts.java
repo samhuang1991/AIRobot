@@ -1,17 +1,12 @@
 package com.apps.airobot.ifly;
 
 import android.content.Context;
-import android.util.Log;
-import android.widget.Toast;
 
 import com.apps.airobot.LogUtil;
 import com.iflytek.cloud.ErrorCode;
-import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.SpeechConstant;
 import com.iflytek.cloud.SpeechSynthesizer;
 import com.iflytek.cloud.SynthesizerListener;
-
-import java.util.TimerTask;
 
 public class IflyTts {
 
@@ -27,6 +22,7 @@ public class IflyTts {
 
     private SynthesizerListener mTtsListener;
 
+
     public IflyTts(Context context,SynthesizerListener listener) {
         mTtsListener = listener;
         mContext = context;
@@ -40,8 +36,18 @@ public class IflyTts {
                 // 正确的做法是将onCreate中的startSpeaking调用移至这里
             }
         });
+        setParam();
     }
 
+    public SpeechSynthesizer getTts(){
+        return mTts;
+    }
+
+    public void stopSpeaking(){
+        if(mTts != null){
+            mTts.stopSpeaking();
+        }
+    }
 
 
     public void startSpeaking(String texts){
