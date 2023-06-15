@@ -46,17 +46,22 @@ import com.apps.airobot.ChatItem;
 import com.apps.airobot.LogUtil;
 import com.apps.airobot.MessageListAdapter;
 import com.apps.airobot.R;
+import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
 import com.apps.airobot.socket.WebSocketAdapter;
 import com.apps.airobot.ui.fragment.PromptFragment;
 import com.apps.airobot.ui.widget.SpeakingDialog;
 import com.apps.airobot.util.NetStateUtils;
+import com.iflytek.cloud.SpeechError;
+import com.iflytek.cloud.SpeechEvent;
+import com.iflytek.cloud.SynthesizerListener;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -77,7 +82,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-public class ChatActivity extends AppCompatActivity implements RecognitionListener {
+public class ChatActivity extends AppCompatActivity implements RecognitionListener, SynthesizerListener {
 
     static UUID uuid = UUID.randomUUID();
     int selectedItemPosition = -1;
@@ -93,6 +98,8 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     MediaPlayer mediaPlayer;
     ArrayList<String> history;
     ChatItem current_bot_chat;
+
+    ChatItem mLastBotChat;
     SpeakingDialog speakingDialog;
     WebSocketAdapter webSocketAdapter;
     private Disposable messageDisposable;
@@ -131,7 +138,16 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
      * 提示词Fragment
      */
     PromptFragment promptFragment;
+    private  boolean isSpeak = true;
 
+    private IflyTts mIflyTts;
+
+    // 缓冲进度
+    private int mPercentForBuffering = 0;
+    // 播放进度
+    private int mPercentForPlaying = 0;
+
+    private File pcmFile;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,6 +155,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         mApi.setFullscreen(this);
         asyncPlayer = new AsyncPlayer("AudioPlayer");
         mediaPlayer = new MediaPlayer();
+        mIflyTts = new IflyTts(ChatActivity.this,ChatActivity.this);
         mApi.chatItems = new ArrayList<>();
         history = new ArrayList<>();
 
@@ -216,6 +233,15 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                         isBotTalking = false;
                         if (!(null == msg.obj)) {
                             history.add("A: " + msg.obj + "<|endoftext|>\n\n");
+                        }
+                        mLastBotChat = current_bot_chat;
+                        if(mLastBotChat != null){
+                            String text = mLastBotChat.getText();
+                            if(text != null && !text.isEmpty() && isSpeak){
+                                pcmFile = new File(getExternalCacheDir().getAbsolutePath(), "tts_pcmFile.pcm");
+                                pcmFile.delete();
+                                mIflyTts.startSpeaking(text);
+                            }
                         }
                         current_bot_chat = new ChatItem();
                         current_bot_chat.setType(0);
@@ -305,6 +331,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                     }
                 });
     }
+
 
     private void startSpeech() {
         //检查网络
@@ -669,6 +696,81 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     private void unsubscribeFromMessages() {
         if (messageDisposable != null && !messageDisposable.isDisposed()) {
             messageDisposable.dispose();
+        }
+    }
+
+    @Override
+    public void onSpeakBegin() {
+        LogUtil.d("开始语音播放");
+    }
+
+    @Override
+    public void onBufferProgress(int percent, int beginPos, int endPos,
+                                 String info) {
+        // 合成进度
+        mPercentForBuffering = percent;
+        String format = String.format("缓冲进度为%d%%，播放进度为%d%%", mPercentForBuffering, mPercentForPlaying);
+        LogUtil.d(format);
+        LogUtil.d("开始语音播放");
+    }
+
+    @Override
+    public void onSpeakPaused() {
+        LogUtil.d("暂停语音播放");
+    }
+
+    @Override
+    public void onSpeakResumed() {
+        LogUtil.d("继续语音播放");
+    }
+
+    @Override
+    public void onSpeakProgress(int percent, int beginPos, int endPos) {
+        // 播放进度
+        mPercentForPlaying = percent;
+        String format = String.format("缓冲进度为%d%%，播放进度为%d%%", mPercentForBuffering, mPercentForPlaying);
+        LogUtil.d(format);
+    }
+
+    @Override
+    public void onCompleted(SpeechError error) {
+        LogUtil.d("语音播放完成");
+        if (error != null) {
+            Toast.makeText(ChatActivity.this,error.getPlainDescription(true),Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onEvent(int eventType, int arg1, int arg2, Bundle obj) {
+        //	 以下代码用于获取与云端的会话id，当业务出错时将会话id提供给技术支持人员，可用于查询会话日志，定位出错原因
+        //	 若使用本地能力，会话id为null
+        if (SpeechEvent.EVENT_SESSION_ID == eventType) {
+            String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
+            LogUtil.d( "session id =" + sid);
+        }
+        // 当设置 SpeechConstant.TTS_DATA_NOTIFY 为1时，抛出buf数据
+        if (SpeechEvent.EVENT_TTS_BUFFER == eventType) {
+            byte[] buf = obj.getByteArray(SpeechEvent.KEY_EVENT_TTS_BUFFER);
+            LogUtil.e( "EVENT_TTS_BUFFER = " + buf.length);
+            // 保存文件
+            appendFile(pcmFile, buf);
+        }
+    }
+
+    /**
+     * 给file追加数据
+     */
+    private void appendFile(File file, byte[] buffer) {
+        try {
+            if (!file.exists()) {
+                boolean b = file.createNewFile();
+            }
+            RandomAccessFile randomFile = new RandomAccessFile(file, "rw");
+            randomFile.seek(file.length());
+            randomFile.write(buffer);
+            randomFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
