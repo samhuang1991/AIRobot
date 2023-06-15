@@ -1,9 +1,14 @@
 package com.apps.airobot.ui.fragment;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.cardview.widget.CardView;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -13,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.apps.airobot.R;
+import com.apps.airobot.adapter.PromptListAdapter;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -20,15 +26,19 @@ import java.util.Random;
 public class PromptFragment extends Fragment {
 
     private ListView listView;
+    private CardView cardView;
 
+    @RequiresApi(api = Build.VERSION_CODES.P)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_prompt, container, false);
         listView = view.findViewById(R.id.list_view);
+        cardView = view.findViewById(R.id.card_view);
+        cardView.setOutlineSpotShadowColor(ContextCompat.getColor(getContext(),R.color.theme_blue));
 
         // 为ListView设置适配器
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, getData());
+        PromptListAdapter adapter = new PromptListAdapter(requireContext(),Arrays.asList(getData()));
         listView.setAdapter(adapter);
 
         return view;

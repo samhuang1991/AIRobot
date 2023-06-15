@@ -8,8 +8,10 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
 
+    <string name="prompts_title_text">尝试这样问我</string>
+
     <string-array name="prompts_list">
-        <item>请推荐一部战争电影</item>
+        <item>请推荐一部喜剧电影</item>
         <item>请问世界最高峰是哪座山</item>
         <item>刘德华的歌曲列表</item>
         <item>为什么深海里的鱼会发光</item>
@@ -23,7 +25,10 @@
         <item>你觉得三体的黑暗丛林法则是真的吗</item>
         <item>我要夏天去云南旅游，有什么美食推荐</item>
         <item>母胎单身30年该如何找对象</item>
+        <item>一只小熊在森林中觅食，帮我续写小故事</item>
     </string-array>
+
+
 
 
 </resources>

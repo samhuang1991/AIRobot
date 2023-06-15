@@ -23,4 +23,8 @@
     <color name="black_background">#FFFBFB</color>
     <color name="chat_background">#66EFEDED</color>
 
+
+
+    <color name="theme_blue">#0099ff</color>
+
 </resources>

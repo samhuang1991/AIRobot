@@ -94,7 +94,6 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     ArrayList<String> history;
     ChatItem current_bot_chat;
     SpeakingDialog speakingDialog;
-    //    Iflytek mIflytek;
     WebSocketAdapter webSocketAdapter;
     private Disposable messageDisposable;
 
