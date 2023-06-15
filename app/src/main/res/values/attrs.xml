@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="GradientUnderlineTextView">
+        <attr name="underlineHeight" format="dimension" />
+        <attr name="underlineOffset" format="dimension" />
+    </declare-styleable>
+</resources>

@@ -20,8 +20,17 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-
-            <TextView
+<!--            <TextView-->
+<!--                android:id="@+id/text_view"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="@string/prompts_title_text"-->
+<!--                android:layout_marginStart="16dp"-->
+<!--                android:layout_marginTop="10dp"-->
+<!--                android:textSize = "20sp"-->
+<!--                android:textColor = "@color/theme_text_black"-->
+<!--                />-->
+            <com.apps.airobot.ui.widget.GradientUnderlineTextView
                 android:id="@+id/text_view"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -30,6 +39,8 @@
                 android:layout_marginTop="10dp"
                 android:textSize = "20sp"
                 android:textColor = "@color/theme_text_black"
+                app:underlineHeight="10dp"
+                app:underlineOffset="2dp"
                 />
 
 
