@@ -6,6 +6,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.VerticalGridView;
 
 import android.Manifest;
@@ -33,6 +36,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -44,6 +48,7 @@ import com.apps.airobot.MessageListAdapter;
 import com.apps.airobot.R;
 import com.apps.airobot.mApi;
 import com.apps.airobot.socket.WebSocketAdapter;
+import com.apps.airobot.ui.fragment.PromptFragment;
 import com.apps.airobot.ui.widget.SpeakingDialog;
 import com.apps.airobot.util.NetStateUtils;
 
@@ -123,7 +128,10 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
      * 断线重连继续发送的文本
      */
     String reconnectText = "";
-
+    /**
+     * 提示词Fragment
+     */
+    PromptFragment promptFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,8 +173,8 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         mBtInput = findViewById(R.id.bt_input);
 
         webSocketAdapter = WebSocketAdapter.getInstance();
-            connectWebSocket();
-            subscribeToMessages();
+        connectWebSocket();
+        subscribeToMessages();
 
         mBtInput.setOnClickListener(v -> {
             startSpeech();
@@ -191,6 +199,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                         break;
                     case USER_MSG:
                         // User' msg
+                        removePromptFragment();
                         if (history.size() >= mApi.max_history) {
                             history.remove(0);
                             history.remove(0);
@@ -231,6 +240,25 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         };
         handler.sendEmptyMessage(BOT_END);
         initRecord();
+
+        initPromptFragment();
+
+    }
+
+    private void removePromptFragment() {
+        // 使用FragmentManager移除当前Fragment
+        if (promptFragment != null) {
+            getSupportFragmentManager().beginTransaction()
+                    .remove(promptFragment)
+                    .commit();
+        }
+    }
+
+    private void initPromptFragment() {
+        promptFragment = new PromptFragment();
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, promptFragment)
+                .commit();
     }
 
     @SuppressLint("CheckResult")
@@ -250,7 +278,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                             // WebSocket连接成功
                             // 可以在这里执行一些操作或显示连接成功的提示
                             mApi.showMsg(ChatActivity.this, "成功连接至服务器");
-                            if (reconnectText != null && reconnectText.length()>0){
+                            if (reconnectText != null && reconnectText.length() > 0) {
                                 webSocketAdapter.send(reconnectText);
                                 sendHandlerMsg(USER_MSG, reconnectText);
                                 sendHandlerMsg(BOT_BEGIN, null);

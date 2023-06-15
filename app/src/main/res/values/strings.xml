@@ -4,4 +4,26 @@
     <string name="FAQ">F A Q</string>
     <string name="chat">Chat Robot</string>
     <string name="input_text">在此处输入文本</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+
+    <string-array name="prompts_list">
+        <item>请推荐一部战争电影</item>
+        <item>请问世界最高峰是哪座山</item>
+        <item>刘德华的歌曲列表</item>
+        <item>为什么深海里的鱼会发光</item>
+        <item>帮我给我的哈士奇取一个显得聪明的名字</item>
+        <item>给我写一篇关于人生的文章</item>
+        <item>拖延症重度患者怎么自救</item>
+        <item>请问《美丽人生》这部电影讲述了什么</item>
+        <item>富含维生素B的食物有哪些</item>
+        <item>你能回答我什么问题</item>
+        <item>给我推荐几个送给父母的节日礼物</item>
+        <item>你觉得三体的黑暗丛林法则是真的吗</item>
+        <item>我要夏天去云南旅游，有什么美食推荐</item>
+        <item>母胎单身30年该如何找对象</item>
+    </string-array>
+
+
 </resources>
