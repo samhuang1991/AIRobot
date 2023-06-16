@@ -33,6 +33,8 @@ import com.apps.airobot.ChatItem;
 import com.apps.airobot.LogUtil;
 import com.apps.airobot.MessageListAdapter;
 import com.apps.airobot.R;
+import com.apps.airobot.bus.RxBus;
+import com.apps.airobot.bus.RxSubscriptions;
 import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
 import com.apps.airobot.socket.WebSocketAdapter;
@@ -55,6 +57,7 @@ import java.util.UUID;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 
 public class ChatActivity extends AppCompatActivity implements RecognitionListener, SynthesizerListener {
 
@@ -85,7 +88,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
-    ImageView mBtInput,mBtVoice;
+    ImageView mBtInput, mBtVoice;
     Handler handler;
     long mBackPressed;
     static final int BOT_BEGIN = 0,
@@ -112,7 +115,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
      * 提示词Fragment
      */
     PromptFragment promptFragment;
-    private  boolean isSpeak = true;
+    private boolean isSpeak = true;
 
     private IflyTts mIflyTts;
 
@@ -122,6 +125,10 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     private int mPercentForPlaying = 0;
 
     private File pcmFile;
+
+    private Disposable mSubscription;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -129,7 +136,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         mApi.setFullscreen(this);
         asyncPlayer = new AsyncPlayer("AudioPlayer");
         mediaPlayer = new MediaPlayer();
-        mIflyTts = new IflyTts(ChatActivity.this,ChatActivity.this);
+        mIflyTts = new IflyTts(ChatActivity.this, ChatActivity.this);
         mApi.chatItems = new ArrayList<>();
         history = new ArrayList<>();
 
@@ -169,7 +176,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         mBtInput.setOnClickListener(v -> {
             startSpeech();
         });
-        mBtVoice.setOnClickListener(v->{
+        mBtVoice.setOnClickListener(v -> {
             switchVoice();
         });
         mBtInput.requestFocus();
@@ -212,9 +219,9 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                             history.add("A: " + msg.obj + "<|endoftext|>\n\n");
                         }
                         mLastBotChat = current_bot_chat;
-                        if(mLastBotChat != null){
+                        if (mLastBotChat != null) {
                             String text = mLastBotChat.getText();
-                            if(text != null && !text.isEmpty() && isSpeak){
+                            if (text != null && !text.isEmpty() && isSpeak) {
                                 pcmFile = new File(getExternalCacheDir().getAbsolutePath(), "tts_pcmFile.pcm");
                                 pcmFile.delete();
                                 mIflyTts.startSpeaking(text);
@@ -245,11 +252,35 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
         initPromptFragment();
 
+        subscribePromptClick();
+    }
+
+    /**
+     * 订阅提示词item点击事件
+     */
+    public void subscribePromptClick() {
+        mSubscription = RxBus.getDefault().toObservable(String.class).subscribe(new Consumer<String>() {
+            @Override
+            public void accept(String prompt) throws Exception {
+                sendMessage(prompt);
+                removePromptFragment();
+            }
+        });
+        //将订阅者加入管理站
+        RxSubscriptions.add(mSubscription);
+
+    }
+
+    /**
+     * 取消订阅，防止内存泄漏
+     */
+    public void unsubscribe() {
+        RxSubscriptions.remove(mSubscription);
     }
 
     private void switchVoice() {
         isSpeak = !isSpeak;
-        mBtVoice.setImageResource(isSpeak?R.drawable.slector_voice_on :R.drawable.slector_voice_off);
+        mBtVoice.setImageResource(isSpeak ? R.drawable.slector_voice_on : R.drawable.slector_voice_off);
     }
 
     private void removePromptFragment() {
@@ -286,9 +317,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                             // 可以在这里执行一些操作或显示连接成功的提示
                             mApi.showMsg(ChatActivity.this, "成功连接至服务器");
                             if (reconnectText != null && reconnectText.length() > 0) {
-                                webSocketAdapter.send(reconnectText);
-                                sendHandlerMsg(USER_MSG, reconnectText);
-                                sendHandlerMsg(BOT_BEGIN, null);
+                                sendMessage(reconnectText);
                                 reconnectText = "";
                             }
                         } else {
@@ -316,7 +345,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
 
     private void startSpeech() {
-        if(mIflyTts != null){
+        if (mIflyTts != null) {
             mIflyTts.stopSpeaking();
         }
         //检查网络
@@ -359,9 +388,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                     mApi.showMsg(this, "请等待 AI 回答结束");
                     return;
                 }
-                webSocketAdapter.send(recognizedText);
-                sendHandlerMsg(USER_MSG, recognizedText);
-                sendHandlerMsg(BOT_BEGIN, null);
+                sendMessage(recognizedText);
             } else {
                 if (reconnectCount == 0) {
                     mApi.showMsg(this, "未连接至服务器");
@@ -405,6 +432,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         deleteCacheFiles();
         disconnectWebSocket();
         unsubscribeFromMessages();
+        unsubscribe();
         super.onDestroy();
     }
 
@@ -721,7 +749,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     public void onCompleted(SpeechError error) {
         LogUtil.d("语音播放完成");
         if (error != null) {
-            Toast.makeText(ChatActivity.this,error.getPlainDescription(true),Toast.LENGTH_SHORT).show();
+            Toast.makeText(ChatActivity.this, error.getPlainDescription(true), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -731,12 +759,12 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         //	 若使用本地能力，会话id为null
         if (SpeechEvent.EVENT_SESSION_ID == eventType) {
             String sid = obj.getString(SpeechEvent.KEY_EVENT_SESSION_ID);
-            LogUtil.d( "session id =" + sid);
+            LogUtil.d("session id =" + sid);
         }
         // 当设置 SpeechConstant.TTS_DATA_NOTIFY 为1时，抛出buf数据
         if (SpeechEvent.EVENT_TTS_BUFFER == eventType) {
             byte[] buf = obj.getByteArray(SpeechEvent.KEY_EVENT_TTS_BUFFER);
-            LogUtil.e( "EVENT_TTS_BUFFER = " + buf.length);
+            LogUtil.e("EVENT_TTS_BUFFER = " + buf.length);
             // 保存文件
             appendFile(pcmFile, buf);
         }
@@ -757,5 +785,15 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 发送消息
+     * @param msg
+     */
+    private void sendMessage(String msg) {
+        webSocketAdapter.send(msg);
+        sendHandlerMsg(USER_MSG, msg);
+        sendHandlerMsg(BOT_BEGIN, null);
     }
 }

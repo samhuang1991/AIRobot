@@ -14,11 +14,13 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.apps.airobot.R;
 import com.apps.airobot.adapter.PromptListAdapter;
+import com.apps.airobot.bus.RxBus;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -27,6 +29,7 @@ public class PromptFragment extends Fragment {
 
     private ListView listView;
     private CardView cardView;
+    private String[] prompt_list;
 
     @RequiresApi(api = Build.VERSION_CODES.P)
     @Nullable
@@ -37,9 +40,16 @@ public class PromptFragment extends Fragment {
         cardView = view.findViewById(R.id.card_view);
         cardView.setOutlineSpotShadowColor(ContextCompat.getColor(getContext(),R.color.theme_blue));
 
+        prompt_list = getData();
         // 为ListView设置适配器
-        PromptListAdapter adapter = new PromptListAdapter(requireContext(),Arrays.asList(getData()));
+        PromptListAdapter adapter = new PromptListAdapter(requireContext(),Arrays.asList(prompt_list));
         listView.setAdapter(adapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                RxBus.getDefault().post(prompt_list[i]);
+            }
+        });
 
         return view;
     }
