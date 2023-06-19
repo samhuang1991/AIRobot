@@ -22,8 +22,8 @@
     <color name="black_overlay">#66000000</color>
     <color name="black_background">#FFFBFB</color>
     <color name="chat_background">#66EFEDED</color>
-
-
+    <color name="FB4846">#FB4846</color>
+    <color name="DFDFDF">#DFDFDF</color>
 
     <color name="theme_blue">#0099ff</color>
     <color name="theme_text_black">#303132</color>

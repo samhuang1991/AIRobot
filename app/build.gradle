@@ -54,6 +54,6 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxjava:2.2.3'
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
-
+    implementation 'io.github.razerdp:BasePopup:3.2.1'
 
 }

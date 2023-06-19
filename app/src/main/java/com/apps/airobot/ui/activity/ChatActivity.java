@@ -22,6 +22,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.ImageView;
@@ -38,6 +39,7 @@ import com.apps.airobot.bus.RxSubscriptions;
 import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
 import com.apps.airobot.socket.WebSocketAdapter;
+import com.apps.airobot.ui.dialog.SettingPopupView;
 import com.apps.airobot.ui.fragment.PromptFragment;
 import com.apps.airobot.ui.widget.SpeakingDialog;
 import com.apps.airobot.util.NetStateUtils;
@@ -88,7 +90,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
-    ImageView mBtInput, mBtVoice;
+    ImageView mBtInput, mBtVoice , mSetting;
     Handler handler;
     long mBackPressed;
     static final int BOT_BEGIN = 0,
@@ -127,7 +129,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     private File pcmFile;
 
     private Disposable mSubscription;
-
+    SettingPopupView settingPopupView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -141,6 +143,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         history = new ArrayList<>();
 
         verticalGridView = findViewById(R.id.vGridView);
+        mSetting = findViewById(R.id.bt_setting);
         messageListAdapter = new MessageListAdapter();
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
@@ -151,13 +154,25 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                 startSpeech();
             }
         });
+        mSetting.setOnClickListener(v -> {
+            if(settingPopupView == null) {
+                settingPopupView = new SettingPopupView(ChatActivity.this, new SettingPopupView.OnCheckListener() {
+                    @Override
+                    public void onCheck(Boolean onCheck) {
+                       isSpeak = onCheck;
+                    }
+                });
+            }
+            settingPopupView.setSetting(isSpeak);
+            settingPopupView.setPopupGravity(Gravity.RIGHT | Gravity.CLIP_HORIZONTAL);
+            settingPopupView.showPopupWindow(mSetting);
+        });
 
         speakingDialog = new SpeakingDialog(ChatActivity.this);
         speakingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
             @Override
             public void onDismiss(DialogInterface dialogInterface) {
                 LogUtil.i("onDismiss isFetchingSound " + isFetchingSound);
-
                 if (isFetchingSound) {
                     if (speechRecognizer != null) {
                         speechRecognizer.stopListening();
