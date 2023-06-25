@@ -15,9 +15,8 @@ import com.apps.airobot.R;
 
 public class SpeakingDialog extends Dialog {
 
-    private WaveView mWaveView;
+
     private TextView mTvTip;
-    private SoundRecordView mSoundRecordView;
 
     public SpeakingDialog(Context context) {
         super(context);
@@ -46,17 +45,10 @@ public class SpeakingDialog extends Dialog {
         gradientDrawable.setGradientType(GradientDrawable.LINEAR_GRADIENT);
         window.setBackgroundDrawable(gradientDrawable);
 
-        mWaveView = findViewById(R.id.waveView);
         mTvTip = (TextView) findViewById(R.id.tvTip);
 
-
-        mSoundRecordView = findViewById(R.id.soundRecordView);
-
     }
 
-    public WaveView getmWaveView() {
-        return mWaveView;
-    }
 
     public void setTip(String tip){
         mTvTip.setText(tip);
@@ -64,7 +56,6 @@ public class SpeakingDialog extends Dialog {
     @Override
     public void show() {
         super.show();
-        mSoundRecordView.startAnimation();
         setTip("");
     }
 

@@ -13,11 +13,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mApi.showMsg(this, "开始载入本地配置");
         mApi.setFullscreen(this);
-        new Handler().postDelayed(()->{
-            startActivity(new Intent(this, ChatActivity.class));
-        }, 200);
+        startActivity(new Intent(this, ChatActivity.class));
+
     }
 
 }

@@ -542,7 +542,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onRmsChanged(float rmsdB) {
-
+        LogUtil.i(rmsdB);
     }
 
     private Runnable stopListeningRunnable = this::stopSpeechToText;
@@ -550,7 +550,8 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onBufferReceived(byte[] buffer) {
         // 在获取到语音输入的音频数据时调用
-        LogUtil.i();
+        LogUtil.i(buffer);
+
     }
 
     @Override
