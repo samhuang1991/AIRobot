@@ -1,5 +1,6 @@
 package com.apps.airobot.ui.activity;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -265,8 +266,9 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         handler.sendEmptyMessage(BOT_END);
         initRecord();
 
-        initPromptFragment();
-
+        if (savedInstanceState == null) {
+            initPromptFragment();
+        }
         subscribePromptClick();
     }
 
@@ -280,17 +282,18 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                 sendMessage(prompt);
                 removePromptFragment();
             }
-        });
-        //将订阅者加入管理站
-        RxSubscriptions.add(mSubscription);
 
+        });
+        RxSubscriptions.add(mSubscription);
     }
 
     /**
      * 取消订阅，防止内存泄漏
      */
     public void unsubscribe() {
-        RxSubscriptions.remove(mSubscription);
+        if (mSubscription!=null){
+            RxSubscriptions.remove(mSubscription);
+        }
     }
 
     private void switchVoice() {
