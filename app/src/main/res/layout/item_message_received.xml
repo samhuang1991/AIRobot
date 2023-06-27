@@ -9,19 +9,16 @@
 
 
     <ImageView
-        android:layout_width="0dp"
-        android:layout_weight="1"
+        android:layout_width="50dp"
         android:layout_height="30dp"
         android:src="@drawable/rebot_icon"
         android:layout_gravity="center"
         />
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="7"
         android:background="@drawable/receiver_bg_normal"
-        android:layout_marginEnd="50dp"
-        >
+        android:layout_marginEnd="30dp">
         <TextView
             android:id="@+id/messageTextView"
             android:layout_width="match_parent"

@@ -269,7 +269,14 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         if (savedInstanceState == null) {
             initPromptFragment();
         }
-        subscribePromptClick();
+        try {
+            // 订阅RxBus并处理事件的代码
+            subscribePromptClick();
+        } catch (Exception e) {
+            // 处理异常
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -397,26 +404,6 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         handler.sendMessage(message);
     }
 
-    private void chatGPT_webSocket(String recognizedText) {
-        if (recognizedText.equals("")) {
-            mApi.showMsg(this, "请先输入文本");
-        } else {
-            if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
-                if (isBotTalking) {
-                    mApi.showMsg(this, "请等待 AI 回答结束");
-                    return;
-                }
-                sendMessage(recognizedText);
-            } else {
-                if (reconnectCount == 0) {
-                    mApi.showMsg(this, "未连接至服务器");
-                    //尝试重连一次
-                    connectToVpsAndSengMsg(recognizedText);
-                }
-            }
-        }
-    }
-
     void connectToVpsAndSengMsg(String recognizedText) {
         mApi.showMsg(this, "重新连接至服务器...");
         reconnectText = recognizedText;
@@ -472,7 +459,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     private void stopSpeechToText() {
         LogUtil.d("语音录入超时的时候调用");
 
-        chatGPT_webSocket(onPartialRecognizedText);
+        sendMessage(onPartialRecognizedText);
 
         if (speechRecognizer != null) {
             speechRecognizer.stopListening();
@@ -545,7 +532,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onRmsChanged(float rmsdB) {
-        LogUtil.i(rmsdB);
+
     }
 
     private Runnable stopListeningRunnable = this::stopSpeechToText;
@@ -632,7 +619,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
             speakingDialog.setTip(recognizedText);
-            chatGPT_webSocket(recognizedText);
+            sendMessage(recognizedText);
         }
         stopSpeechEvent();
     }
@@ -811,8 +798,26 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
      * @param msg
      */
     private void sendMessage(String msg) {
-        webSocketAdapter.send(msg);
-        sendHandlerMsg(USER_MSG, msg);
-        sendHandlerMsg(BOT_BEGIN, null);
+
+        if (msg == null && msg.length() == 0) {
+            mApi.showMsg(this, "请先输入文本");
+            return;
+        }
+        if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
+            if (isBotTalking) {
+                mApi.showMsg(this, "请等待 AI 回答结束");
+                return;
+            }
+            webSocketAdapter.send(msg);
+            sendHandlerMsg(USER_MSG, msg);
+            sendHandlerMsg(BOT_BEGIN, null);
+        } else {
+            if (reconnectCount == 0) {
+                mApi.showMsg(this, "未连接至服务器");
+                //尝试重连一次
+                connectToVpsAndSengMsg(msg);
+            }
+        }
+
     }
 }

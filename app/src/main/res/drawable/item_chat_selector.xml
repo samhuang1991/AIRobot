@@ -7,9 +7,9 @@
         </shape>
     </item>
 
-    <item android:state_focused="false">
-        <shape>
-            <solid android:color="#66EFEDED" />
-        </shape>
-    </item>
+<!--    <item android:state_focused="false">-->
+<!--        <shape>-->
+<!--            <solid android:color="#66EFEDED" />-->
+<!--        </shape>-->
+<!--    </item>-->
 </selector>

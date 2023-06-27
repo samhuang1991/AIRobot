@@ -18,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.apps.airobot.LogUtil;
 import com.apps.airobot.R;
 import com.apps.airobot.adapter.PromptListAdapter;
 import com.apps.airobot.bus.RxBus;
@@ -47,6 +48,7 @@ public class PromptFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                LogUtil.i("选中发送的内容："+prompt_list[i]);
                 RxBus.getDefault().post(prompt_list[i]);
             }
         });
