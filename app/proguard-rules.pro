@@ -21,3 +21,6 @@
 #-renamesourcefileattribute SourceFile
 -keep class com.iflytek.**{*;}
 -keepattributes Signature
+
+-keep class org.libpag.** {*;}
+-keep class androidx.exifinterface.** {*;}

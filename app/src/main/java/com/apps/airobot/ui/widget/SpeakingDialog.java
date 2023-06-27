@@ -9,14 +9,22 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.apps.airobot.MyApplication;
 import com.apps.airobot.R;
+import com.apps.airobot.ui.activity.MainActivity;
+
+import org.libpag.PAGFile;
+import org.libpag.PAGView;
 
 public class SpeakingDialog extends Dialog {
 
 
     private TextView mTvTip;
+    private PAGView pagView;
 
     public SpeakingDialog(Context context) {
         super(context);
@@ -46,6 +54,7 @@ public class SpeakingDialog extends Dialog {
         window.setBackgroundDrawable(gradientDrawable);
 
         mTvTip = (TextView) findViewById(R.id.tvTip);
+        pagView = (PAGView) findViewById(R.id.pagView);
 
     }
 
@@ -57,6 +66,10 @@ public class SpeakingDialog extends Dialog {
     public void show() {
         super.show();
         setTip("");
+        PAGFile pagFile = PAGFile.Load(MyApplication.getContext().getAssets(), "lines.pag");
+        pagView.setComposition(pagFile);
+        pagView.setRepeatCount(10);
+        pagView.play();
     }
 
 
