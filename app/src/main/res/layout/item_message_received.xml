@@ -11,7 +11,7 @@
     <ImageView
         android:layout_width="50dp"
         android:layout_height="30dp"
-        android:src="@drawable/rebot_icon"
+        android:src="@drawable/ic_robot"
         android:layout_gravity="center"
         />
     <LinearLayout

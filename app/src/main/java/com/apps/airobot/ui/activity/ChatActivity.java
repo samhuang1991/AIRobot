@@ -58,64 +58,38 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Timer;
-import java.util.UUID;
 
-import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 
-public class ChatActivity extends AppCompatActivity implements RecognitionListener, SynthesizerListener {
+public class ChatActivity extends BaseChatActivity implements RecognitionListener, SynthesizerListener {
 
-    static UUID uuid = UUID.randomUUID();
-    int selectedItemPosition = -1;
-    private static final int LISTENING_TIMEOUT = 1500; // 设置超时时间为5秒
     private static final int SILENCE_THRESHOLD = 1; // 设置音量阈值
 
     // 用HashMap存储听写结果
     private HashMap<String, String> mIatResults = new LinkedHashMap<>();
-    boolean isBotTalking = false,
-            isFetchingSound = false,
-            isPartialResult = false;
+
     AsyncPlayer asyncPlayer;
     MediaPlayer mediaPlayer;
     ArrayList<String> history;
     ChatItem current_bot_chat;
 
     ChatItem mLastBotChat;
-    SpeakingDialog speakingDialog;
-    WebSocketAdapter webSocketAdapter;
     private Disposable messageDisposable;
 
-    int reconnectCount = 0; // 重连次数
     String onPartialRecognizedText;
-    // 发送定时请求
-    Timer timer = new Timer();
+
 
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
     ImageView mBtInput, mBtVoice , mSetting;
-    Handler handler;
     long mBackPressed;
-    static final int BOT_BEGIN = 0,
-            BOT_CONTINUE = 1,
-            USER_MSG = 2,
-            BOT_END = 3,
-            CLEAR_HISTORY = 4;
-
-    String serverURL = "wss://ai.dp.qhmoka.com/ai-service/chatgpt/websocket/",
-            bot_record = "",
-            SEND_END = "[DONE]",
-            SEND_STOP = "[STOP]",
-            SEND_STOP_SUCCESS = "[STOP-SUCCESS]";
 
     /**
      * 是否需要断线重连。默认ture
      */
     boolean isNeedReconnect = true;
-    /**
-     * 断线重连继续发送的文本
-     */
-    String reconnectText = "";
+
     /**
      * 提示词Fragment
      */
@@ -134,6 +108,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     private Disposable mSubscription;
     SettingPopupView settingPopupView;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -145,6 +120,91 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         mApi.chatItems = new ArrayList<>();
         history = new ArrayList<>();
 
+
+        initUI();
+
+        subscribeToMessages();
+
+        if (savedInstanceState == null) {
+            initPromptFragment();
+        }
+        try {
+            // 订阅RxBus并处理事件的代码
+            subscribePromptClick();
+        } catch (Exception e) {
+            // 处理异常
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    protected void handleCustomMessage(Message msg) {
+        switch (msg.what) {
+            case BOT_BEGIN:
+                // Bot begin printing
+                Log.e("BOT", "BEGIN");
+                isBotTalking = true;
+                mApi.chatItems.add(current_bot_chat);
+                refreshListview();
+                break;
+            case BOT_CONTINUE:
+                // Bot continue printing
+                Log.e("BOT", "printing: " + msg.obj.toString());
+                current_bot_chat.appendText(msg.obj.toString());
+                refreshListview();
+                break;
+            case USER_MSG:
+                // User' msg
+                removePromptFragment();
+                if (history.size() >= mApi.max_history) {
+                    history.remove(0);
+                    history.remove(0);
+                }
+                history.add("Q: " + msg.obj.toString() + "<|endoftext|>\n\n");
+                ChatItem chatItem = new ChatItem();
+                chatItem.setType(1);
+                chatItem.setText(msg.obj.toString());
+                mApi.chatItems.add(chatItem);
+                refreshListview();
+                break;
+            case BOT_END:
+                // Bot end printing
+                Log.e("BOT", "END");
+                isBotTalking = false;
+                if (!(null == msg.obj)) {
+                    history.add("A: " + msg.obj + "<|endoftext|>\n\n");
+                }
+                mLastBotChat = current_bot_chat;
+                if (mLastBotChat != null) {
+                    String text = mLastBotChat.getText();
+                    if (text != null && !text.isEmpty() && isSpeak) {
+                        pcmFile = new File(getExternalCacheDir().getAbsolutePath(), "tts_pcmFile.pcm");
+                        pcmFile.delete();
+                        mIflyTts.startSpeaking(text);
+                    }
+                }
+                current_bot_chat = new ChatItem();
+                current_bot_chat.setType(0);
+                current_bot_chat.setText("\t\t");
+                refreshListview();
+                mBtInput.setEnabled(true);
+                mBtInput.requestFocus();
+                break;
+            case CLEAR_HISTORY:
+                // Delete History
+                history.clear();
+                mApi.chatItems.clear();
+                refreshListview();
+                mApi.showMsg(ChatActivity.this, "记忆已清除");
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    protected void initUI() {
         verticalGridView = findViewById(R.id.vGridView);
         mSetting = findViewById(R.id.bt_setting);
         messageListAdapter = new MessageListAdapter();
@@ -162,7 +222,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                 settingPopupView = new SettingPopupView(ChatActivity.this, new SettingPopupView.OnCheckListener() {
                     @Override
                     public void onCheck(Boolean onCheck) {
-                       isSpeak = onCheck;
+                        isSpeak = onCheck;
                     }
                 });
             }
@@ -170,27 +230,8 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
             settingPopupView.setPopupGravity(Gravity.RIGHT | Gravity.CLIP_HORIZONTAL);
             settingPopupView.showPopupWindow(mSetting);
         });
-
-        speakingDialog = new SpeakingDialog(ChatActivity.this);
-        speakingDialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialogInterface) {
-                LogUtil.i("onDismiss isFetchingSound " + isFetchingSound);
-                if (isFetchingSound) {
-                    if (speechRecognizer != null) {
-                        speechRecognizer.stopListening();
-                        speechRecognizer.cancel();
-                    }
-                    LogUtil.i("onDismiss ");
-                }
-            }
-        });
         mBtInput = findViewById(R.id.bt_input);
         mBtVoice = findViewById(R.id.bt_voice);
-        webSocketAdapter = WebSocketAdapter.getInstance();
-        connectWebSocket();
-        subscribeToMessages();
-
         mBtInput.setOnClickListener(v -> {
             startSpeech();
         });
@@ -198,86 +239,8 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
             switchVoice();
         });
         mBtInput.requestFocus();
-        handler = new Handler(Looper.getMainLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                switch (msg.what) {
-                    case BOT_BEGIN:
-                        // Bot begin printing
-                        Log.e("BOT", "BEGIN");
-                        isBotTalking = true;
-                        mApi.chatItems.add(current_bot_chat);
-                        refreshListview();
-                        break;
-                    case BOT_CONTINUE:
-                        // Bot continue printing
-                        Log.e("BOT", "printing: " + msg.obj.toString());
-                        current_bot_chat.appendText(msg.obj.toString());
-                        refreshListview();
-                        break;
-                    case USER_MSG:
-                        // User' msg
-                        removePromptFragment();
-                        if (history.size() >= mApi.max_history) {
-                            history.remove(0);
-                            history.remove(0);
-                        }
-                        history.add("Q: " + msg.obj.toString() + "<|endoftext|>\n\n");
-                        ChatItem chatItem = new ChatItem();
-                        chatItem.setType(1);
-                        chatItem.setText(msg.obj.toString());
-                        mApi.chatItems.add(chatItem);
-                        refreshListview();
-                        break;
-                    case BOT_END:
-                        // Bot end printing
-                        Log.e("BOT", "END");
-                        isBotTalking = false;
-                        if (!(null == msg.obj)) {
-                            history.add("A: " + msg.obj + "<|endoftext|>\n\n");
-                        }
-                        mLastBotChat = current_bot_chat;
-                        if (mLastBotChat != null) {
-                            String text = mLastBotChat.getText();
-                            if (text != null && !text.isEmpty() && isSpeak) {
-                                pcmFile = new File(getExternalCacheDir().getAbsolutePath(), "tts_pcmFile.pcm");
-                                pcmFile.delete();
-                                mIflyTts.startSpeaking(text);
-                            }
-                        }
-                        current_bot_chat = new ChatItem();
-                        current_bot_chat.setType(0);
-                        current_bot_chat.setText("\t\t");
-                        refreshListview();
-                        mBtInput.setEnabled(true);
-                        mBtInput.requestFocus();
-                        break;
-                    case CLEAR_HISTORY:
-                        // Delete History
-                        history.clear();
-                        mApi.chatItems.clear();
-                        refreshListview();
-                        mApi.showMsg(ChatActivity.this, "记忆已清除");
-                        break;
 
-                    default:
-                        break;
-                }
-            }
-        };
         handler.sendEmptyMessage(BOT_END);
-        initRecord();
-
-        if (savedInstanceState == null) {
-            initPromptFragment();
-        }
-        try {
-            // 订阅RxBus并处理事件的代码
-            subscribePromptClick();
-        } catch (Exception e) {
-            // 处理异常
-            e.printStackTrace();
-        }
 
     }
 
@@ -326,49 +289,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
                 .commit();
     }
 
-    @SuppressLint("CheckResult")
-    private void connectWebSocket() {
 
-        webSocketAdapter.connect(serverURL + uuid)
-                .subscribe(new Observer<Boolean>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        // 订阅开始时的回调
-                    }
-
-                    @Override
-                    public void onNext(Boolean connected) {
-                        // 连接成功时的回调
-                        if (connected) {
-                            // WebSocket连接成功
-                            // 可以在这里执行一些操作或显示连接成功的提示
-                            mApi.showMsg(ChatActivity.this, "成功连接至服务器");
-                            if (reconnectText != null && reconnectText.length() > 0) {
-                                sendMessage(reconnectText);
-                                reconnectText = "";
-                            }
-                        } else {
-                            // WebSocket连接失败
-                            // 可以在这里执行一些操作或显示连接失败的提示
-                            sendHandlerMsg(BOT_BEGIN, null);
-                            sendHandlerMsg(BOT_CONTINUE, "Failed to connect to the server");
-                            sendHandlerMsg(BOT_END, null);
-                        }
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        // 连接错误时的回调
-                        LogUtil.i();
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        // 连接完成时的回调
-                        LogUtil.i();
-                    }
-                });
-    }
 
 
     private void startSpeech() {
@@ -385,7 +306,6 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         }
         speakingDialog.show();
         startSpeechToText();
-        LogUtil.i("mBtInput.setOnClickListener");
         mBtInput.setEnabled(false);
     }
 
@@ -396,22 +316,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         verticalGridView.scrollToPosition(mApi.chatItems.size() - 1);
     }
 
-    void sendHandlerMsg(int what, String msg) {
-        Message message = new Message();
-        message.what = what;
-        if (null == msg) {
-            msg = "";
-        }
-        message.obj = msg;
-        handler.sendMessage(message);
-    }
 
-    void connectToVpsAndSengMsg(String recognizedText) {
-        mApi.showMsg(this, "重新连接至服务器...");
-        reconnectText = recognizedText;
-        connectWebSocket();
-//        reconnectCount++;
-    }
 
     @Override
     public void onBackPressed() {
@@ -444,18 +349,7 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
     }
 
 
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
-    private SpeechRecognizer speechRecognizer;
 
-    private void initRecord() {
-        // 检查录音权限
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.RECORD_AUDIO, Manifest.permission.INTERNET}, REQUEST_RECORD_AUDIO_PERMISSION);
-        }
-        if (speechRecognizer == null) {
-            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        }
-    }
 
 
     private void stopSpeechToText() {
@@ -795,30 +689,14 @@ public class ChatActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    /**
-     * 发送消息
-     * @param msg
-     */
-    private void sendMessage(String msg) {
-
-        if (msg == null && msg.length() == 0) {
-            mApi.showMsg(this, "请先输入文本");
-            return;
+    @Override
+    protected void initRecord() {
+        // 检查录音权限
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.RECORD_AUDIO, Manifest.permission.INTERNET}, REQUEST_RECORD_AUDIO_PERMISSION);
         }
-        if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
-            if (isBotTalking) {
-                mApi.showMsg(this, "请等待 AI 回答结束");
-                return;
-            }
-            webSocketAdapter.send(msg);
-            sendHandlerMsg(USER_MSG, msg);
-            sendHandlerMsg(BOT_BEGIN, null);
-        } else {
-            if (reconnectCount == 0) {
-                mApi.showMsg(this, "未连接至服务器");
-                //尝试重连一次
-                connectToVpsAndSengMsg(msg);
-            }
+        if (speechRecognizer == null) {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         }
 
     }
