@@ -11,13 +11,11 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.VerticalGridView;
@@ -25,11 +23,11 @@ import androidx.leanback.widget.VerticalGridView;
 import com.alibaba.fastjson.JSONObject;
 import com.apps.airobot.ChatItem;
 import com.apps.airobot.LogUtil;
-import com.apps.airobot.MessageListAdapter;
+import com.apps.airobot.adapter.MessageListAdapter;
 import com.apps.airobot.R;
+import com.apps.airobot.adapter.MiniMessageListAdapter;
 import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
-import com.apps.airobot.ui.dialog.SettingPopupView;
 import com.apps.airobot.util.NetStateUtils;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SynthesizerListener;
@@ -44,7 +42,7 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
 
     private View rightView;
     private VerticalGridView verticalGridView;
-    private MessageListAdapter messageListAdapter;
+    private MiniMessageListAdapter messageListAdapter;
     private IflyTts mIflyTts;
 
     ChatItem current_bot_chat;
@@ -183,10 +181,10 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     protected void initUI() {
         rightView = findViewById(R.id.rightView);
         verticalGridView = findViewById(R.id.vGridView);
-        messageListAdapter = new MessageListAdapter();
+        messageListAdapter = new MiniMessageListAdapter();
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.setWindowAlignment(VerticalGridView.WINDOW_ALIGN_LOW_EDGE);
-        messageListAdapter.setOnItemClickListener(new MessageListAdapter.OnItemClickListener() {
+        messageListAdapter.setOnItemClickListener(new MiniMessageListAdapter.OnItemClickListener() {
             @Override
             public void onItemClickListener(View v) {
                 LogUtil.i("item onClick!");

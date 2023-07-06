@@ -1,4 +1,4 @@
-package com.apps.airobot;
+package com.apps.airobot.adapter;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -6,6 +6,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.apps.airobot.ChatItem;
+import com.apps.airobot.LogUtil;
+import com.apps.airobot.R;
+import com.apps.airobot.mApi;
 
 public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.ViewHolder> {
 
