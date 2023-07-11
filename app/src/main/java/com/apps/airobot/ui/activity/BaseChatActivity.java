@@ -173,23 +173,48 @@ public abstract class BaseChatActivity extends BaseActivity {
             mApi.showMsg(this, "请先输入文本");
             return;
         }
+        reconnectText = msg;
         if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
             if (isBotTalking) {
                 mApi.showMsg(this, "请等待 AI 回答结束");
                 return;
             }
             webSocketAdapter.send(msg);
+            LogUtil.i("发送消息："+msg);
             sendHandlerMsg(USER_MSG, msg);
             sendHandlerMsg(BOT_BEGIN, null);
         } else {
             if (reconnectCount == 0) {
                 mApi.showMsg(this, "重新连接至服务器...");
-                reconnectText = msg;
                 connectWebSocket();
             }
         }
 
     }
+
+    /**
+     * 发送消息（隐式发送，发送后不需要处理UI，用于终止聊天等命令的发送）
+     * @param msg
+     */
+    void sendImplicitMessage(String msg) {
+
+        if (msg == null && msg.length() == 0) {
+            mApi.showMsg(this, "请先输入文本");
+            return;
+        }
+        reconnectText = msg;
+        if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
+            webSocketAdapter.send(msg);
+            LogUtil.i("发送消息："+msg);
+        } else {
+            if (reconnectCount == 0) {
+                mApi.showMsg(this, "重新连接至服务器...");
+                connectWebSocket();
+            }
+        }
+
+    }
+
 
 
 //    private void initRecord() {

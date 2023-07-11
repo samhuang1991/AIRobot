@@ -292,7 +292,8 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
             return;
         }
         if (isBotTalking) {
-            webSocketAdapter.send(SEND_STOP);
+            sendHandlerMsg(BOT_END, null);
+            sendImplicitMessage(SEND_STOP);
         }
         speakingDialog.show();
         startSpeechToText();
@@ -571,6 +572,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                                     sendHandlerMsg(BOT_END, bot_record);
                                     //Log.e("Msg", bot_record);
                                     bot_record = "";
+                                    isBotTalking = false;
                                 } else {
                                     JSONObject object = JSONObject.parseObject(message);
                                     if (object != null) {

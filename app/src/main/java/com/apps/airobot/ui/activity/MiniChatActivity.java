@@ -11,8 +11,10 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
@@ -28,6 +30,8 @@ import com.apps.airobot.R;
 import com.apps.airobot.adapter.MiniMessageListAdapter;
 import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
+import com.apps.airobot.socket.WebSocketAdapter;
+import com.apps.airobot.ui.dialog.SettingPopupView;
 import com.apps.airobot.util.NetStateUtils;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SynthesizerListener;
@@ -52,6 +56,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     private boolean isSpeak = true;
     String onPartialRecognizedText;
     private Disposable messageDisposable;
+    private ImageView mSetting;
+    SettingPopupView settingPopupView;
 
 
     @Override
@@ -150,7 +156,7 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
                 }
                 current_bot_chat = new ChatItem();
                 current_bot_chat.setType(0);
-                current_bot_chat.setText("\t\t");
+//                current_bot_chat.setText("\t\t");
                 refreshListview();
 
                 break;
@@ -192,6 +198,23 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             }
         });
 
+        mSetting = findViewById(R.id.bt_setting);
+        mSetting.setOnClickListener(v -> {
+            if(settingPopupView == null) {
+                settingPopupView = new SettingPopupView(MiniChatActivity.this, new SettingPopupView.OnCheckListener() {
+                    @Override
+                    public void onCheck(Boolean onCheck) {
+                        isSpeak = onCheck;
+                    }
+                });
+            }
+            settingPopupView.setSetting(isSpeak);
+            settingPopupView.setPopupGravity(Gravity.RIGHT | Gravity.CLIP_HORIZONTAL);
+            settingPopupView.showPopupWindow(mSetting);
+        });
+        verticalGridView.requestFocus();
+
+
         handler.sendEmptyMessage(BOT_END);
 
     }
@@ -207,7 +230,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             return;
         }
         if (isBotTalking) {
-            webSocketAdapter.send(SEND_STOP);
+            sendHandlerMsg(BOT_END, null);
+            sendImplicitMessage(SEND_STOP);
         }
         speakingDialog.show();
         startSpeechToText();
@@ -454,9 +478,25 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
         if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
             startSpeech();
             return true;
+        }else if (keyCode == KeyEvent.KEYCODE_DPAD_UP){
+            LogUtil.i("SelectedPosition：" + verticalGridView.getSelectedPosition());
+            if (verticalGridView.getSelectedPosition() == 0){
+                mSetting.requestFocus();
+            }
         }
 
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override
+    protected void onDestroy() {
+        unsubscribeFromMessages();
+        super.onDestroy();
+    }
+
+    private void unsubscribeFromMessages() {
+        if (messageDisposable != null && !messageDisposable.isDisposed()) {
+            messageDisposable.dispose();
+        }
+    }
 }
