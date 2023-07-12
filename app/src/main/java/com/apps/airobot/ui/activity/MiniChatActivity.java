@@ -14,10 +14,13 @@ import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.VerticalGridView;
@@ -25,6 +28,7 @@ import androidx.leanback.widget.VerticalGridView;
 import com.alibaba.fastjson.JSONObject;
 import com.apps.airobot.ChatItem;
 import com.apps.airobot.LogUtil;
+import com.apps.airobot.MyApplication;
 import com.apps.airobot.adapter.MessageListAdapter;
 import com.apps.airobot.R;
 import com.apps.airobot.adapter.MiniMessageListAdapter;
@@ -32,9 +36,13 @@ import com.apps.airobot.ifly.IflyTts;
 import com.apps.airobot.mApi;
 import com.apps.airobot.socket.WebSocketAdapter;
 import com.apps.airobot.ui.dialog.SettingPopupView;
+import com.apps.airobot.ui.widget.MiniBottomLayout;
 import com.apps.airobot.util.NetStateUtils;
 import com.iflytek.cloud.SpeechError;
 import com.iflytek.cloud.SynthesizerListener;
+
+import org.libpag.PAGFile;
+import org.libpag.PAGView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,6 +65,7 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     String onPartialRecognizedText;
     private Disposable messageDisposable;
     private ImageView mSetting;
+    private MiniBottomLayout mBottomLL;
     SettingPopupView settingPopupView;
 
 
@@ -214,6 +223,12 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
         });
         verticalGridView.requestFocus();
 
+        mBottomLL = findViewById(R.id.bottomLL);
+        PAGFile pagFile = PAGFile.Load(MyApplication.getContext().getAssets(), "lines.pag");
+        PAGView pagView = findViewById(R.id.pagView);
+        pagView.setComposition(pagFile);
+        pagView.setRepeatCount(10);
+        pagView.play();
 
         handler.sendEmptyMessage(BOT_END);
 
@@ -233,7 +248,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             sendHandlerMsg(BOT_END, null);
             sendImplicitMessage(SEND_STOP);
         }
-        speakingDialog.show();
+//        speakingDialog.show();
+        showBottomLayout("");
         startSpeechToText();
     }
 
@@ -282,7 +298,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     public void onReadyForSpeech(Bundle bundle) {
         // 在准备开始说话时调用
         LogUtil.i("在准备开始说话时调用");
-        speakingDialog.setTip("请说，我在听...");
+//        speakingDialog.setTip("请说，我在听...");
+        showBottomLayout("请说，我在听...");
         isFetchingSound = true;
         isPartialResult = false;
     }
@@ -318,9 +335,10 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
 
     private void stopSpeechEvent() {
         isFetchingSound = false;
-        if (speakingDialog != null && speakingDialog.isShowing()) {
-            speakingDialog.dismissAndSetTip();
-        }
+//        if (speakingDialog != null && speakingDialog.isShowing()) {
+//            speakingDialog.dismissAndSetTip();
+//        }
+        hideBottomLayout();
     }
 
     @Override
@@ -399,7 +417,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
         if (result != null && !result.isEmpty()) {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
-            speakingDialog.setTip(recognizedText);
+//            speakingDialog.setTip(recognizedText);
+            showBottomLayout(recognizedText);
             sendMessage(recognizedText);
         }
         stopSpeechEvent();
@@ -415,7 +434,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             String recognizedText = partialResultList.get(0);
             if (recognizedText != null && !recognizedText.isEmpty()) {
                 LogUtil.d("语音部分输出：" + recognizedText);
-                speakingDialog.setTip(recognizedText);
+//                speakingDialog.setTip(recognizedText);
+                showBottomLayout(recognizedText);
                 onPartialRecognizedText = recognizedText;
             }
         }
@@ -498,5 +518,14 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
         if (messageDisposable != null && !messageDisposable.isDisposed()) {
             messageDisposable.dispose();
         }
+    }
+
+    private void showBottomLayout(String text){
+        mBottomLL.setVisibility(View.VISIBLE);
+        mBottomLL.setTextViewText(text);
+    }
+
+    private void hideBottomLayout(){
+        mBottomLL.setVisibility(View.GONE);
     }
 }
