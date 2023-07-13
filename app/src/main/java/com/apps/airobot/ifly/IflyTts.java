@@ -49,6 +49,13 @@ public class IflyTts {
         }
     }
 
+    public Boolean isSpeaking(){
+        if(mTts != null){
+           return mTts.isSpeaking();
+        }
+        return false;
+    }
+
     public void startSpeaking(String texts){
         int code = mTts.startSpeaking(texts, mTtsListener);
     }

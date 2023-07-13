@@ -289,7 +289,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
     }
 
     private void startSpeech() {
-        if (mIflyTts != null) {
+        if (mIflyTts != null && mIflyTts.isSpeaking()) {
             mIflyTts.stopSpeaking();
         }
         //检查网络
