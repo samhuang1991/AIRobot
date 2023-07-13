@@ -541,7 +541,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         LogUtil.i("keyCode：" + keyCode);
 
-        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+        if (keyCode == KeyEvent.KEYCODE_1) {
             startSpeech();
             return true;
         }

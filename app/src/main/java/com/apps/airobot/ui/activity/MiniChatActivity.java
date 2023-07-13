@@ -223,7 +223,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             settingPopupView.setPopupGravity(Gravity.CENTER);
             settingPopupView.showPopupWindow(rightView);
         });
-        verticalGridView.requestFocus();
 
         mBottomLL = findViewById(R.id.bottomLL);
         PAGFile pagFile = PAGFile.Load(MyApplication.getContext().getAssets(), "lines.pag");
@@ -490,7 +489,7 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         LogUtil.i("keyCode：" + keyCode);
 
-        if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER) {
+        if (keyCode == KeyEvent.KEYCODE_1) {
             startSpeech();
             return true;
         }else if (keyCode == KeyEvent.KEYCODE_DPAD_UP){
