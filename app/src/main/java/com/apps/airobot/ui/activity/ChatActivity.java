@@ -175,7 +175,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                 }
                 current_bot_chat = new ChatItem();
                 current_bot_chat.setType(0);
-                current_bot_chat.setText("\t\t");
+//                current_bot_chat.setText("\t\t");
                 refreshListview();
                 mBtInput.setEnabled(true);
                 mBtInput.requestFocus();
@@ -217,7 +217,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
             }
             settingPopupView.setSetting(isSpeak);
             settingPopupView.setPopupGravity(Gravity.CENTER);
-            settingPopupView.showPopupWindow(mSetting);
+            settingPopupView.showPopupWindow(verticalGridView.getRootView());
         });
         mBtInput = findViewById(R.id.bt_input);
         mBtVoice = findViewById(R.id.bt_voice);

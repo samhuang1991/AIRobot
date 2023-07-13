@@ -66,7 +66,10 @@ public class SpeakingDialog extends Dialog {
     public void show() {
         super.show();
         setTip("");
-
+        PAGFile pagFile = PAGFile.Load(MyApplication.getContext().getAssets(), "lines.pag");
+        pagView.setComposition(pagFile);
+        pagView.setRepeatCount(10);
+        pagView.play();
     }
 
 
