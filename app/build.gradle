@@ -35,6 +35,21 @@ android {
     buildFeatures {
         viewBinding true
     }
+    signingConfigs {
+
+        debug {
+            keyAlias 'android'
+            keyPassword 'android'
+            storeFile file('../app/rt2851m.keystore')
+            storePassword 'android'
+        }
+
+        release {
+            keyAlias 'android'
+            keyPassword 'android'
+            storeFile file('../app/rt2851m.keystore')
+            storePassword 'android'        }
+    }
 }
 
 dependencies {
