@@ -49,7 +49,6 @@ public class IflyTts {
         }
     }
 
-
     public void startSpeaking(String texts){
         int code = mTts.startSpeaking(texts, mTtsListener);
     }
@@ -94,7 +93,7 @@ public class IflyTts {
                 mContext.getExternalFilesDir("msc").getAbsolutePath() + "/tts.pcm");
     }
 
-    public void destroy() {
+    public void destroySpeaking() {
         if (null != mTts) {
             mTts.stopSpeaking();
             // 退出时释放连接

@@ -280,6 +280,13 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
 
 
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mIflyTts != null) {
+            mIflyTts.stopSpeaking();
+        }
+    }
 
     private void startSpeech() {
         if (mIflyTts != null) {
@@ -323,6 +330,9 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
         unsubscribeFromMessages();
         unsubscribe();
         super.onDestroy();
+        if (mIflyTts != null) {
+            mIflyTts.destroySpeaking();
+        }
     }
 
 
