@@ -73,7 +73,6 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
     private VerticalGridView verticalGridView;
     private MessageListAdapter messageListAdapter;
     ImageView mBtInput, mBtVoice , mSetting;
-    long mBackPressed;
 
     /**
      * 是否需要断线重连。默认ture
@@ -217,7 +216,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                 });
             }
             settingPopupView.setSetting(isSpeak);
-            settingPopupView.setPopupGravity(Gravity.RIGHT | Gravity.CLIP_HORIZONTAL);
+            settingPopupView.setPopupGravity(Gravity.CENTER);
             settingPopupView.showPopupWindow(mSetting);
         });
         mBtInput = findViewById(R.id.bt_input);
@@ -305,19 +304,6 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
         messageListAdapter.notifyDataSetChanged();
         verticalGridView.setAdapter(messageListAdapter);
         verticalGridView.scrollToPosition(mApi.chatItems.size() - 1);
-    }
-
-
-
-    @Override
-    public void onBackPressed() {
-        if (mBackPressed > System.currentTimeMillis() - 2000) {
-            ActivityController.getInstance().killAllActivity();
-            super.onBackPressed();
-        } else {
-            mApi.showMsg(this, "连续返回两次退出APP");
-            mBackPressed = System.currentTimeMillis();
-        }
     }
 
     void deleteCacheFiles() {

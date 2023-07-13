@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.apps.airobot.ActivityController;
 import com.apps.airobot.ChatItem;
 import com.apps.airobot.LogUtil;
 import com.apps.airobot.MyApplication;
@@ -59,6 +60,7 @@ public abstract class BaseChatActivity extends BaseActivity {
             CLEAR_HISTORY = 4;
 
     int reconnectCount = 0; // 重连次数
+    long mBackPressed;
 
     /**
      * 断线重连继续发送的文本
@@ -215,6 +217,16 @@ public abstract class BaseChatActivity extends BaseActivity {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        if (mBackPressed > System.currentTimeMillis() - 2000) {
+            ActivityController.getInstance().killAllActivity();
+            super.onBackPressed();
+        } else {
+            mApi.showMsg(this, "连续返回两次退出APP");
+            mBackPressed = System.currentTimeMillis();
+        }
+    }
 
 
 //    private void initRecord() {

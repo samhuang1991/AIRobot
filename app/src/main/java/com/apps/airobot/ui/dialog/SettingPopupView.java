@@ -7,6 +7,7 @@ import android.view.animation.TranslateAnimation;
 import android.widget.CheckBox;
 
 import com.apps.airobot.R;
+import com.apps.airobot.ui.activity.MiniChatActivity;
 import com.apps.airobot.ui.widget.SmoothCheckBox;
 
 import razerdp.basepopup.BasePopupWindow;
@@ -18,7 +19,11 @@ public class SettingPopupView extends BasePopupWindow {
     OnCheckListener monCheckListener;
     public SettingPopupView(Context context,OnCheckListener onCheckListener) {
         super(context);
-        setContentView(R.layout.popup_setting);
+        if (context instanceof MiniChatActivity){
+            setContentView(R.layout.popup_mini_setting);
+        }else {
+            setContentView(R.layout.popup_setting);
+        }
         checkBox = findViewById(R.id.checkbox);
         monCheckListener = onCheckListener;
     }
@@ -38,7 +43,7 @@ public class SettingPopupView extends BasePopupWindow {
     @Override
     protected Animation onCreateShowAnimation() {
         return AnimationHelper.asAnimation()
-                .withTranslation(TranslationConfig.FROM_LEFT)
+                .withTranslation(TranslationConfig.FROM_TOP)
                 .toShow();
     }
 

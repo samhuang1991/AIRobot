@@ -23,6 +23,8 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.leanback.widget.VerticalGridView;
 
 import com.alibaba.fastjson.JSONObject;
@@ -218,8 +220,8 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
                 });
             }
             settingPopupView.setSetting(isSpeak);
-            settingPopupView.setPopupGravity(Gravity.RIGHT | Gravity.CLIP_HORIZONTAL);
-            settingPopupView.showPopupWindow(mSetting);
+            settingPopupView.setPopupGravity(Gravity.CENTER);
+            settingPopupView.showPopupWindow(rightView);
         });
         verticalGridView.requestFocus();
 
@@ -248,7 +250,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             sendHandlerMsg(BOT_END, null);
             sendImplicitMessage(SEND_STOP);
         }
-//        speakingDialog.show();
         showBottomLayout("");
         startSpeechToText();
     }
@@ -298,7 +299,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     public void onReadyForSpeech(Bundle bundle) {
         // 在准备开始说话时调用
         LogUtil.i("在准备开始说话时调用");
-//        speakingDialog.setTip("请说，我在听...");
         showBottomLayout("请说，我在听...");
         isFetchingSound = true;
         isPartialResult = false;
@@ -335,9 +335,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
 
     private void stopSpeechEvent() {
         isFetchingSound = false;
-//        if (speakingDialog != null && speakingDialog.isShowing()) {
-//            speakingDialog.dismissAndSetTip();
-//        }
         hideBottomLayout();
     }
 
@@ -417,7 +414,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
         if (result != null && !result.isEmpty()) {
             String recognizedText = result.get(0);
             LogUtil.d("语音输出：" + recognizedText);
-//            speakingDialog.setTip(recognizedText);
             showBottomLayout(recognizedText);
             sendMessage(recognizedText);
         }
@@ -434,7 +430,6 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
             String recognizedText = partialResultList.get(0);
             if (recognizedText != null && !recognizedText.isEmpty()) {
                 LogUtil.d("语音部分输出：" + recognizedText);
-//                speakingDialog.setTip(recognizedText);
                 showBottomLayout(recognizedText);
                 onPartialRecognizedText = recognizedText;
             }
@@ -528,4 +523,14 @@ public class MiniChatActivity extends BaseChatActivity implements RecognitionLis
     private void hideBottomLayout(){
         mBottomLL.setVisibility(View.GONE);
     }
+
+
+//    private void showSettingDialog() {
+//        FragmentManager fragmentManager = getSupportFragmentManager();
+//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+//        customDialog = new SettingPopupView();
+//        fragmentTransaction.add(R.id.custom_dialog_container, customDialog);
+//        fragmentTransaction.commit();
+//    }
 }
+
