@@ -29,7 +29,6 @@
             android:src="@drawable/ic_logo"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:focusable="true"
             />
 
         <ImageView
