@@ -158,6 +158,7 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                 refreshListview();
                 break;
             case BOT_END:
+            case BOT_OK_END:
                 // Bot end printing
                 Log.e("BOT", "END");
                 isBotTalking = false;
@@ -165,9 +166,9 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                     history.add("A: " + msg.obj + "<|endoftext|>\n\n");
                 }
                 mLastBotChat = current_bot_chat;
-                if (mLastBotChat != null) {
+                if (mLastBotChat != null && msg.what == BOT_END ) {
                     String text = mLastBotChat.getText();
-                    if (text != null && !text.isEmpty() && isSpeak) {
+                    if (text != null && !text.isEmpty() && isSpeak ) {
                         pcmFile = new File(getExternalCacheDir().getAbsolutePath(), "tts_pcmFile.pcm");
                         pcmFile.delete();
                         mIflyTts.startSpeaking(text);
@@ -298,10 +299,11 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
             return;
         }
         if (isBotTalking) {
-            sendHandlerMsg(BOT_END, null);
+            sendHandlerMsg(BOT_OK_END, null);
             sendImplicitMessage(SEND_STOP);
         }
         speakingDialog.show();
+
         startSpeechToText();
         mBtInput.setEnabled(false);
     }
@@ -411,6 +413,9 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
         LogUtil.i("在开始说话时调用");
         //设置3s后，还没有onPartialResults语音部分识别回调，则关闭dialog
         handler.postDelayed(recognizeTimeoutRunnable, 3000);
+        if(mIflyTts != null ){
+            mIflyTts.stopSpeaking();
+        }
     }
 
     @Override
@@ -424,7 +429,6 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
     public void onBufferReceived(byte[] buffer) {
         // 在获取到语音输入的音频数据时调用
         LogUtil.i(buffer);
-
     }
 
     @Override
@@ -528,7 +532,9 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
             handler.removeCallbacks(stopListeningRunnable);
         }
         handler.postDelayed(stopListeningRunnable, LISTENING_TIMEOUT);
-
+        if(mIflyTts != null){
+            mIflyTts.stopSpeaking();
+        }
     }
 
     @Override
@@ -566,7 +572,6 @@ public class ChatActivity extends BaseChatActivity implements RecognitionListene
                             if (isBotTalking) {
                                 if (message.equals(SEND_END) || message.equals(SEND_STOP_SUCCESS)) {
                                     sendHandlerMsg(BOT_END, bot_record);
-                                    //Log.e("Msg", bot_record);
                                     bot_record = "";
                                     isBotTalking = false;
                                 } else {

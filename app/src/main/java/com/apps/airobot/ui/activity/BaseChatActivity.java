@@ -57,7 +57,8 @@ public abstract class BaseChatActivity extends BaseActivity {
             BOT_CONTINUE = 1,
             USER_MSG = 2,
             BOT_END = 3,
-            CLEAR_HISTORY = 4;
+            CLEAR_HISTORY = 4,
+            BOT_OK_END = 5;
 
     int reconnectCount = 0; // 重连次数
     long mBackPressed;
@@ -70,6 +71,7 @@ public abstract class BaseChatActivity extends BaseActivity {
     Handler handler;
 
     protected abstract void handleCustomMessage(Message msg);
+
     protected abstract void initRecord();
 
     @Override
@@ -167,6 +169,7 @@ public abstract class BaseChatActivity extends BaseActivity {
 
     /**
      * 发送消息
+     *
      * @param msg
      */
     void sendMessage(String msg) {
@@ -182,7 +185,7 @@ public abstract class BaseChatActivity extends BaseActivity {
                 return;
             }
             webSocketAdapter.send(msg);
-            LogUtil.i("发送消息："+msg);
+            LogUtil.i("发送消息：" + msg);
             sendHandlerMsg(USER_MSG, msg);
             sendHandlerMsg(BOT_BEGIN, null);
         } else {
@@ -196,6 +199,7 @@ public abstract class BaseChatActivity extends BaseActivity {
 
     /**
      * 发送消息（隐式发送，发送后不需要处理UI，用于终止聊天等命令的发送）
+     *
      * @param msg
      */
     void sendImplicitMessage(String msg) {
@@ -207,7 +211,7 @@ public abstract class BaseChatActivity extends BaseActivity {
         reconnectText = msg;
         if (webSocketAdapter.getConnectionState() == WebSocketAdapter.ConnectionState.CONNECTED) {
             webSocketAdapter.send(msg);
-            LogUtil.i("发送消息："+msg);
+            LogUtil.i("发送消息：" + msg);
         } else {
             if (reconnectCount == 0) {
                 mApi.showMsg(this, "重新连接至服务器...");
